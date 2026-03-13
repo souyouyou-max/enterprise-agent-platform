@@ -1,4 +1,4 @@
-package com.enterprise.agent.insight.model;
+package com.enterprise.agent.dataservice.insight.model;
 
 import lombok.Builder;
 import lombok.Data;

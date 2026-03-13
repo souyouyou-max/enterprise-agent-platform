@@ -1,7 +1,7 @@
-package com.enterprise.agent.knowledge.service;
+package com.enterprise.agent.dataservice.knowledge.service;
 
 import com.enterprise.agent.common.ai.service.LlmService;
-import com.enterprise.agent.knowledge.entity.KnowledgeDocument;
+import com.enterprise.agent.dataservice.knowledge.entity.KnowledgeDocument;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

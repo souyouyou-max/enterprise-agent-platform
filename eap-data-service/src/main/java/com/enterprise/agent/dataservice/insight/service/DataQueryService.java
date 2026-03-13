@@ -1,4 +1,4 @@
-package com.enterprise.agent.insight.service;
+package com.enterprise.agent.dataservice.insight.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

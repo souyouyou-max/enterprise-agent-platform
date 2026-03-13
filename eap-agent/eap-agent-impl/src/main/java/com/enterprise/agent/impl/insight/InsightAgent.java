@@ -1,9 +1,9 @@
 package com.enterprise.agent.impl.insight;
 
-import com.enterprise.agent.insight.model.InsightResult;
-import com.enterprise.agent.insight.service.DataQueryService;
-import com.enterprise.agent.insight.service.InsightAnalysisService;
-import com.enterprise.agent.insight.service.NlToSqlService;
+import com.enterprise.agent.dataservice.insight.model.InsightResult;
+import com.enterprise.agent.dataservice.insight.service.DataQueryService;
+import com.enterprise.agent.dataservice.insight.service.InsightAnalysisService;
+import com.enterprise.agent.dataservice.insight.service.NlToSqlService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

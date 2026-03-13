@@ -10,15 +10,27 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>eap-knowledge</artifactId>
-    <name>EAP Knowledge</name>
-    <description>企业知识问答（RAG）：文档向量化、余弦相似度检索、LLM 整合生成答案</description>
+    <artifactId>eap-data-service</artifactId>
+    <name>EAP Data Service</name>
+    <description>数据服务层：知识问答（RAG）+ 智能数据洞察（NL2BI）</description>
 
     <dependencies>
         <!-- 公共 AI 接口（LlmService / EmbeddingService） -->
         <dependency>
             <groupId>com.enterprise.agent</groupId>
             <artifactId>eap-common-ai</artifactId>
+        </dependency>
+
+        <!-- LLM 服务（EmbeddingModel 自动配置） -->
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-llm-service</artifactId>
+        </dependency>
+
+        <!-- 企业数据层（数据源配置） -->
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-enterprise-data</artifactId>
         </dependency>
 
         <!-- Spring AI Core：EmbeddingModel 接口 -->
@@ -33,7 +45,13 @@
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
         </dependency>
 
-        <!-- Jackson：向量 JSON 序列化 -->
+        <!-- JDBC：动态 SQL 执行 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+
+        <!-- Jackson：向量 JSON 序列化 / 查询结果序列化 -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>

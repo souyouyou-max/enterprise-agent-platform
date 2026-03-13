@@ -1,8 +1,8 @@
-package com.enterprise.agent.knowledge.service;
+package com.enterprise.agent.dataservice.knowledge.service;
 
 import com.enterprise.agent.common.ai.service.EmbeddingService;
-import com.enterprise.agent.knowledge.entity.KnowledgeDocument;
-import com.enterprise.agent.knowledge.repository.KnowledgeRepository;
+import com.enterprise.agent.dataservice.knowledge.entity.KnowledgeDocument;
+import com.enterprise.agent.dataservice.knowledge.repository.KnowledgeRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

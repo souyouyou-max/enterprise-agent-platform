@@ -1,7 +1,7 @@
-package com.enterprise.agent.knowledge.repository;
+package com.enterprise.agent.dataservice.knowledge.repository;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.enterprise.agent.knowledge.entity.KnowledgeDocument;
+import com.enterprise.agent.dataservice.knowledge.entity.KnowledgeDocument;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

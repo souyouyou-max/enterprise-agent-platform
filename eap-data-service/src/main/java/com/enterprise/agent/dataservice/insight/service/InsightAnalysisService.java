@@ -1,4 +1,4 @@
-package com.enterprise.agent.insight.service;
+package com.enterprise.agent.dataservice.insight.service;
 
 import com.enterprise.agent.common.ai.service.LlmService;
 import com.fasterxml.jackson.core.JsonProcessingException;

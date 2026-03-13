@@ -1,4 +1,4 @@
-package com.enterprise.agent.knowledge.service;
+package com.enterprise.agent.dataservice.knowledge.service;
 
 import com.enterprise.agent.common.ai.model.EmbeddingRequest;
 import com.enterprise.agent.common.ai.model.EmbeddingResponse;

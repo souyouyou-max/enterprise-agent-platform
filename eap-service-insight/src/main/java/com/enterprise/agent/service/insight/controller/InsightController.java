@@ -2,8 +2,8 @@ package com.enterprise.agent.service.insight.controller;
 
 import com.enterprise.agent.common.core.response.ResponseResult;
 import com.enterprise.agent.impl.insight.InsightAgent;
-import com.enterprise.agent.insight.model.InsightResult;
-import com.enterprise.agent.insight.service.NlToSqlService;
+import com.enterprise.agent.dataservice.insight.model.InsightResult;
+import com.enterprise.agent.dataservice.insight.service.NlToSqlService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

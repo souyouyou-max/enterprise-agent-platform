@@ -1,9 +1,9 @@
 package com.enterprise.agent.service.knowledge.controller;
 
 import com.enterprise.agent.common.core.response.ResponseResult;
-import com.enterprise.agent.knowledge.entity.KnowledgeDocument;
-import com.enterprise.agent.knowledge.service.KnowledgeIndexService;
-import com.enterprise.agent.knowledge.service.KnowledgeQaService;
+import com.enterprise.agent.dataservice.knowledge.entity.KnowledgeDocument;
+import com.enterprise.agent.dataservice.knowledge.service.KnowledgeIndexService;
+import com.enterprise.agent.dataservice.knowledge.service.KnowledgeQaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

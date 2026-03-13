@@ -23,9 +23,8 @@
         <!-- Agent 核心层 -->
         <module>eap-agent/eap-agent-core</module>
         <module>eap-agent/eap-agent-impl</module>
-        <!-- 业务场景层 -->
-        <module>eap-knowledge</module>
-        <module>eap-insight</module>
+        <!-- 数据服务层 -->
+        <module>eap-data-service</module>
         <!-- 任务编排层 -->
         <module>eap-task</module>
         <!-- 微服务层 -->
@@ -140,12 +139,7 @@
             </dependency>
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-knowledge</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-insight</artifactId>
+                <artifactId>eap-data-service</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

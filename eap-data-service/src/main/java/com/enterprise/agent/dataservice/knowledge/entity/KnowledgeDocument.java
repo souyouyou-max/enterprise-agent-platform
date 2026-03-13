@@ -1,4 +1,4 @@
-package com.enterprise.agent.knowledge.entity;
+package com.enterprise.agent.dataservice.knowledge.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
