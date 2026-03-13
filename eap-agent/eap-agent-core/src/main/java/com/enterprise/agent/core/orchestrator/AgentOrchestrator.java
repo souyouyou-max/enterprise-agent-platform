@@ -1,38 +1,30 @@
 package com.enterprise.agent.core.orchestrator;
 
 import com.enterprise.agent.common.core.enums.AgentRole;
-import com.enterprise.agent.core.agent.BaseAgent;
 import com.enterprise.agent.core.context.AgentContext;
 import com.enterprise.agent.core.context.AgentResult;
+import com.enterprise.agent.core.dispatcher.AgentDispatcher;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 /**
  * AgentOrchestrator - Agent 编排器
- * 支持 runPipeline: Planner → Executor → Reviewer → Communicator
+ * <p>
+ * 通过 AgentDispatcher 执行 Planner → Executor → Reviewer → Communicator 流水线，
+ * 支持 Reviewer 质量不达标时重试执行。
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class AgentOrchestrator {
 
-    private final Map<AgentRole, BaseAgent> agentRegistry;
-
-    public AgentOrchestrator(List<BaseAgent> agents) {
-        this.agentRegistry = agents.stream()
-                .collect(Collectors.toMap(BaseAgent::getRole, Function.identity()));
-        log.info("AgentOrchestrator 已注册 {} 个 Agent: {}", agents.size(),
-                agents.stream().map(a -> a.getRole().name()).collect(Collectors.joining(", ")));
-    }
+    private final AgentDispatcher agentDispatcher;
 
     /**
-     * 执行完整 Pipeline: Planner → Executor → Reviewer（可重试）→ Communicator
+     * 执行完整 Pipeline：Planner → Executor → Reviewer（可重试）→ Communicator
      *
-     * @param context         任务上下文
+     * @param context          任务上下文
      * @param maxReviewRetries Reviewer 质量不达标时最多重试执行次数
      * @return 最终的 AgentResult（来自 Communicator）
      */
@@ -48,11 +40,12 @@ public class AgentOrchestrator {
 
         // Step 2: Executor + Reviewer（支持重试）
         int reviewAttempt = 0;
-        AgentResult reviewerResult;
         do {
             if (reviewAttempt > 0) {
                 log.warn("[Orchestrator] 质量不达标，第 {} 次重新执行 Executor", reviewAttempt);
-                context.getReviewIssues().clear();
+                if (context.getReviewIssues() != null) {
+                    context.getReviewIssues().clear();
+                }
             }
 
             AgentResult executorResult = runAgent(AgentRole.EXECUTOR, context);
@@ -61,7 +54,7 @@ public class AgentOrchestrator {
                 return executorResult;
             }
 
-            reviewerResult = runAgent(AgentRole.REVIEWER, context);
+            runAgent(AgentRole.REVIEWER, context);
             reviewAttempt++;
 
         } while (!context.isReviewPassed() && reviewAttempt < maxReviewRetries);
@@ -78,20 +71,9 @@ public class AgentOrchestrator {
     }
 
     /**
-     * 执行单个 Agent
+     * 执行单个 Agent（委托给 AgentDispatcher）
      */
     public AgentResult runAgent(AgentRole role, AgentContext context) {
-        BaseAgent agent = agentRegistry.get(role);
-        if (agent == null) {
-            String msg = "未找到 Agent: " + role;
-            log.error("[Orchestrator] {}", msg);
-            return AgentResult.failure(role, msg);
-        }
-        try {
-            return agent.execute(context);
-        } catch (Exception e) {
-            log.error("[Orchestrator] Agent {} 执行异常: {}", role, e.getMessage(), e);
-            return AgentResult.failure(role, e.getMessage());
-        }
+        return agentDispatcher.dispatch(role, context);
     }
 }

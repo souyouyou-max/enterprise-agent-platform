@@ -42,12 +42,12 @@ public abstract class BaseAgent {
     public abstract AgentResult execute(AgentContext context);
 
     /**
-     * 构建 ChatClient（注入系统提示 + 记忆窗口）
+     * 构建 ChatClient.Builder（注入系统提示）
+     * 子类可链式调用 .defaultTools(toolkit).build() 注册专属技能集
      */
-    protected ChatClient buildChatClient() {
+    protected ChatClient.Builder buildChatClient() {
         return ChatClient.builder(chatModel)
-                .defaultSystem(getSystemPrompt())
-                .build();
+                .defaultSystem(getSystemPrompt());
     }
 
     /**
