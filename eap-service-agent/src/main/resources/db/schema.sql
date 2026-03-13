@@ -153,3 +153,103 @@ CREATE INDEX IF NOT EXISTS idx_procurement_contract_supplier ON procurement_cont
 CREATE INDEX IF NOT EXISTS idx_procurement_contract_date ON procurement_contract(contract_date DESC);
 CREATE INDEX IF NOT EXISTS idx_procurement_bid_project ON procurement_bid(bid_project_id);
 CREATE INDEX IF NOT EXISTS idx_supplier_relation_supplier ON supplier_relation(supplier_id);
+
+-- ============================================================
+-- 规则SQL分析引擎 - 数据接入层表（方案A）
+-- ============================================================
+
+-- 招标项目表（来自招采系统）
+CREATE TABLE IF NOT EXISTS procurement_project (
+    id               BIGSERIAL PRIMARY KEY,
+    project_code     VARCHAR(50) UNIQUE,
+    project_name     VARCHAR(200),
+    org_code         VARCHAR(50),
+    contract_amount  DECIMAL(15,2),
+    bid_method       VARCHAR(50),      -- 公开招标/竞争性谈判/单一来源/直接采购
+    supplier_name    VARCHAR(200),
+    supplier_id      VARCHAR(100),
+    project_date     DATE,
+    has_bid_process  BOOLEAN DEFAULT FALSE,
+    synced_at        TIMESTAMP DEFAULT NOW()
+);
+
+COMMENT ON TABLE procurement_project IS '招标项目表（来自招采系统，规则引擎数据源）';
+COMMENT ON COLUMN procurement_project.bid_method IS '招标方式：公开招标/竞争性谈判/单一来源/直接采购';
+COMMENT ON COLUMN procurement_project.has_bid_process IS '是否有完整招标流程';
+
+-- 付款台账（来自费控系统）
+CREATE TABLE IF NOT EXISTS payment_record (
+    id               BIGSERIAL PRIMARY KEY,
+    contract_no      VARCHAR(100),
+    org_code         VARCHAR(50),
+    supplier_name    VARCHAR(200),
+    supplier_id      VARCHAR(100),
+    payment_amount   DECIMAL(15,2),
+    payment_date     DATE,
+    project_category VARCHAR(100),
+    payment_purpose  TEXT,
+    synced_at        TIMESTAMP DEFAULT NOW()
+);
+
+COMMENT ON TABLE payment_record IS '付款台账（来自费控系统，规则引擎数据源）';
+COMMENT ON COLUMN payment_record.contract_no IS '合同编号，用于关联招采系统的 project_code';
+
+-- 内部员工表（来自EHR系统）
+CREATE TABLE IF NOT EXISTS internal_employee (
+    id            BIGSERIAL PRIMARY KEY,
+    employee_id   VARCHAR(50) UNIQUE,
+    employee_name VARCHAR(50),
+    department    VARCHAR(100),
+    position      VARCHAR(100),
+    phone         VARCHAR(20),
+    synced_at     TIMESTAMP DEFAULT NOW()
+);
+
+COMMENT ON TABLE internal_employee IS '内部员工表（来自EHR系统，用于利益冲突检测）';
+
+-- 供应商工商信息（来自企查查/天眼查）
+CREATE TABLE IF NOT EXISTS supplier_info (
+    id                 BIGSERIAL PRIMARY KEY,
+    supplier_id        VARCHAR(100) UNIQUE,
+    supplier_name      VARCHAR(200),
+    legal_person       VARCHAR(50),
+    registered_capital DECIMAL(15,2),
+    shareholders       TEXT,           -- JSON格式：[{"name":"xx","ratio":30}]
+    business_scope     TEXT,
+    risk_level         VARCHAR(20),
+    synced_at          TIMESTAMP DEFAULT NOW()
+);
+
+COMMENT ON TABLE supplier_info IS '供应商工商信息（来自企查查，用于围标/利益冲突检测）';
+COMMENT ON COLUMN supplier_info.shareholders IS '股东信息JSON数组，格式：[{"name":"xx","ratio":30}]';
+
+-- 疑点线索结果表（规则SQL引擎写入，Agent读取分析）
+CREATE TABLE IF NOT EXISTS clue_result (
+    id               BIGSERIAL PRIMARY KEY,
+    org_code         VARCHAR(50),
+    clue_type        VARCHAR(50),    -- UNTENDERED/SPLIT_PURCHASE/COLLUSIVE_BID/CONFLICT_OF_INTEREST
+    risk_level       VARCHAR(10),    -- HIGH/MEDIUM/LOW
+    clue_title       VARCHAR(200),
+    clue_detail      TEXT,
+    related_amount   DECIMAL(15,2),
+    related_supplier VARCHAR(200),
+    rule_name        VARCHAR(100),
+    status           VARCHAR(20) DEFAULT 'PENDING',  -- PENDING/CONFIRMED/DISMISSED
+    created_at       TIMESTAMP DEFAULT NOW()
+);
+
+COMMENT ON TABLE clue_result IS '疑点线索结果表（规则引擎写入，Agent读取分析）';
+COMMENT ON COLUMN clue_result.clue_type IS '线索类型：UNTENDERED/SPLIT_PURCHASE/COLLUSIVE_BID/CONFLICT_OF_INTEREST';
+COMMENT ON COLUMN clue_result.risk_level IS '风险等级：HIGH/MEDIUM/LOW';
+COMMENT ON COLUMN clue_result.status IS '处理状态：PENDING/CONFIRMED/DISMISSED';
+
+CREATE INDEX IF NOT EXISTS idx_procurement_project_org ON procurement_project(org_code);
+CREATE INDEX IF NOT EXISTS idx_procurement_project_supplier ON procurement_project(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_payment_record_org ON payment_record(org_code);
+CREATE INDEX IF NOT EXISTS idx_payment_record_supplier ON payment_record(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_payment_record_date ON payment_record(payment_date DESC);
+CREATE INDEX IF NOT EXISTS idx_internal_employee_name ON internal_employee(employee_name);
+CREATE INDEX IF NOT EXISTS idx_supplier_info_supplier ON supplier_info(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_clue_result_org ON clue_result(org_code);
+CREATE INDEX IF NOT EXISTS idx_clue_result_type ON clue_result(clue_type);
+CREATE INDEX IF NOT EXISTS idx_clue_result_status ON clue_result(status);
