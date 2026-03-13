@@ -5,7 +5,8 @@ public enum AgentRole {
     EXECUTOR("执行Agent - 工具调用"),
     REVIEWER("审查Agent - 质量评估"),
     COMMUNICATOR("通信Agent - 报告生成"),
-    INTERACTION_CENTER("交互中心Agent - 意图识别与路由");
+    INTERACTION_CENTER("交互中心Agent - 意图识别与路由"),
+    PROCUREMENT_AUDITOR("招采稽核智能体");
 
     private final String description;
 

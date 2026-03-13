@@ -23,6 +23,10 @@ spring:
           uri: lb://eap-service-chat
           predicates:
             - Path=/api/v1/chat/**
+        - id: procurement-audit
+          uri: lb://eap-service-agent
+          predicates:
+            - Path=/api/v1/procurement-audit/**
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
     nacos:

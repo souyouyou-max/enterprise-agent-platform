@@ -308,7 +308,7 @@ GET /api/v1/tasks/{id}/report   ← 获取最终报告
 
 ---
 
-## 三大业务场景
+## 四大业务场景
 
 ### 场景一：流程自动化
 
@@ -378,6 +378,69 @@ InsightAnalysisService.analyze()
     │ Prompt："你是数据分析师，根据以下数据回答问题并给出洞察..."
     │
 InsightResult {generatedSql, rawData, analysis, chartHint}
+```
+
+### 场景四：招采稽核（eap-procurement-audit）
+
+**场景背景**：企业采购环节存在应招未招、化整为零、围标串标、利益输送等违规风险，传统人工稽核效率低、覆盖面有限。招采稽核智能体通过自动化数据比对与分析，系统性识别违规线索，辅助合规部门精准锁定高风险项目。
+
+**四个细分场景**：
+
+| 场景 | 检测逻辑 | 风险类型 |
+|------|---------|---------|
+| 大额采购未招标 | 对比费控合同与招采系统，筛选超门槛且无招采流程的合同 | 合规违规 |
+| 化整为零识别 | 统计短期内同一供应商同类项目多笔合同，累计金额接近门槛 | 规避监管 |
+| 围标串标识别 | 分析同一项目多家投标文件的 Jaccard 相似度 + 股东关联关系 | 招标舞弊 |
+| 利益输送预警 | 比对中标供应商股东/法人/董监高与公司内部员工名单 | 关联交易 |
+
+**稽核流程**：
+
+```
+POST /api/v1/procurement-audit/audit/full?orgCode=ORG001
+                │
+   ProcurementAuditAgent（招采稽核智能体）
+                │  LLM 自主决策调用工具
+    ┌───────────┼──────────────────────┐
+    ↓           ↓            ↓         ↓
+detectUntendered  detectSplit  detectCollusive  detectConflict
+（大额未招标）   （化整为零）   （围标串标）     （利益输送）
+    └───────────┴──────────────────────┘
+                │
+    汇总稽核报告（风险等级 + 线索清单 + 核查建议）
+```
+
+**API 接口**：
+
+```bash
+# 全量稽核（运行全部4个场景）
+curl -X POST "http://localhost:8080/api/v1/procurement-audit/audit/full?orgCode=ORG001"
+
+# 单场景稽核（untendered / split / collusive / conflict）
+curl -X POST "http://localhost:8080/api/v1/procurement-audit/audit/scene?orgCode=ORG001&scene=collusive"
+
+# 查询采购合同列表
+curl "http://localhost:8080/api/v1/procurement-audit/contracts?orgCode=ORG001"
+
+# 查询投标记录
+curl "http://localhost:8080/api/v1/procurement-audit/bids/BID-PROJECT-001"
+```
+
+**典型稽核输出示例**：
+
+```
+【场景1：大额采购未招标】发现 3 条疑似大额采购未招标记录（门槛：50万元）：
+
+1. 项目名称：办公楼安防监控系统采购
+   供应商：上海安防设备集团
+   合同金额：92.00万元
+   合同日期：2026-01-12  ⚠️ 风险等级：高
+
+【场景4：利益输送预警】发现 2 条疑似利益输送线索：
+
+线索1  ⚠️ 风险等级：高
+  中标供应商：鑫达办公设备有限公司（ID：SUP020）
+  关联人员：赵海波（法人，持股：60.0%）
+  关联内部员工：EMP-20231（采购部经理）
 ```
 
 ---

@@ -89,3 +89,67 @@ COMMENT ON COLUMN knowledge_document.category IS '文档分类，如：HR / 财�
 
 CREATE INDEX IF NOT EXISTS idx_knowledge_doc_category ON knowledge_document(category);
 CREATE INDEX IF NOT EXISTS idx_knowledge_doc_created_at ON knowledge_document(created_at DESC);
+
+-- ============================================================
+-- 招采稽核模块
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS procurement_contract (
+    id               BIGSERIAL PRIMARY KEY,
+    org_code         VARCHAR(50),
+    project_name     VARCHAR(200),
+    supplier_name    VARCHAR(200),
+    supplier_id      VARCHAR(100),
+    contract_amount  DECIMAL(15,2),
+    payment_amount   DECIMAL(15,2),
+    contract_date    DATE,
+    payment_date     DATE,
+    has_zc_process   BOOLEAN DEFAULT FALSE,
+    project_category VARCHAR(100),
+    deleted          SMALLINT DEFAULT 0,
+    created_at       TIMESTAMP DEFAULT NOW()
+);
+
+COMMENT ON TABLE procurement_contract IS '采购合同表（招采稽核-场景1/2）';
+COMMENT ON COLUMN procurement_contract.has_zc_process IS '是否有招采流程：true=有，false=无';
+COMMENT ON COLUMN procurement_contract.project_category IS '项目类别，如：IT服务/软件开发/办公用品/工程建设';
+
+CREATE TABLE IF NOT EXISTS procurement_bid (
+    id             BIGSERIAL PRIMARY KEY,
+    bid_project_id VARCHAR(100),
+    project_name   VARCHAR(200),
+    supplier_name  VARCHAR(200),
+    supplier_id    VARCHAR(100),
+    bid_amount     DECIMAL(15,2),
+    bid_content    TEXT,
+    legal_person   VARCHAR(50),
+    shareholders   TEXT,
+    is_winner      BOOLEAN DEFAULT FALSE,
+    bid_date       DATE,
+    created_at     TIMESTAMP DEFAULT NOW()
+);
+
+COMMENT ON TABLE procurement_bid IS '投标记录表（招采稽核-场景3/4）';
+COMMENT ON COLUMN procurement_bid.bid_content IS '投标文件摘要/关键词，用于相似度比对';
+COMMENT ON COLUMN procurement_bid.shareholders IS '股东信息（JSON数组）';
+
+CREATE TABLE IF NOT EXISTS supplier_relation (
+    id                   BIGSERIAL PRIMARY KEY,
+    supplier_id          VARCHAR(100),
+    supplier_name        VARCHAR(200),
+    related_person_name  VARCHAR(50),
+    relation_type        VARCHAR(50),
+    share_ratio          DECIMAL(5,2),
+    internal_employee_id VARCHAR(100),
+    created_at           TIMESTAMP DEFAULT NOW()
+);
+
+COMMENT ON TABLE supplier_relation IS '供应商关联关系表（招采稽核-场景4利益输送）';
+COMMENT ON COLUMN supplier_relation.relation_type IS '关联类型：股东/法人/董事/监事/高管';
+COMMENT ON COLUMN supplier_relation.internal_employee_id IS '关联的内部员工ID，为空表示未发现关联';
+
+CREATE INDEX IF NOT EXISTS idx_procurement_contract_org_code ON procurement_contract(org_code);
+CREATE INDEX IF NOT EXISTS idx_procurement_contract_supplier ON procurement_contract(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_procurement_contract_date ON procurement_contract(contract_date DESC);
+CREATE INDEX IF NOT EXISTS idx_procurement_bid_project ON procurement_bid(bid_project_id);
+CREATE INDEX IF NOT EXISTS idx_supplier_relation_supplier ON supplier_relation(supplier_id);
