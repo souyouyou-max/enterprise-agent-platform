@@ -15,10 +15,10 @@
     <description>数据服务层：知识问答（RAG）+ 智能数据洞察（NL2BI）</description>
 
     <dependencies>
-        <!-- 公共 AI 接口（LlmService / EmbeddingService） -->
+        <!-- 公共接口（LlmService / EmbeddingService / core） -->
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-common-ai</artifactId>
+            <artifactId>eap-common</artifactId>
         </dependency>
 
         <!-- LLM 服务（EmbeddingModel 自动配置） -->
@@ -27,10 +27,10 @@
             <artifactId>eap-llm-service</artifactId>
         </dependency>
 
-        <!-- 企业数据层（数据源配置） -->
+        <!-- 企业集成层（数据实体 + 工具） -->
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-enterprise-data</artifactId>
+            <artifactId>eap-enterprise</artifactId>
         </dependency>
 
         <!-- Spring AI Core：EmbeddingModel 接口 -->

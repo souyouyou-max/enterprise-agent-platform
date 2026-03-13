@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-common-ai</artifactId>
+            <artifactId>eap-common</artifactId>
         </dependency>
 
         <!-- Spring AI - OpenAI -->

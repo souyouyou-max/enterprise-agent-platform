@@ -13,20 +13,16 @@
 
     <modules>
         <!-- 公共层 -->
-        <module>eap-common/eap-common-core</module>
-        <module>eap-common/eap-common-ai</module>
+        <module>eap-common</module>
         <!-- LLM 后端层 -->
         <module>eap-llm/eap-llm-service</module>
         <!-- 企业集成层 -->
-        <module>eap-enterprise/eap-enterprise-data</module>
-        <module>eap-enterprise/eap-enterprise-tools</module>
+        <module>eap-enterprise</module>
         <!-- Agent 核心层 -->
         <module>eap-agent/eap-agent-core</module>
         <module>eap-agent/eap-agent-impl</module>
         <!-- 数据服务层 -->
         <module>eap-data-service</module>
-        <!-- 任务编排层 -->
-        <module>eap-task</module>
         <!-- 微服务层 -->
         <module>eap-gateway</module>
         <module>eap-service-agent</module>
@@ -99,12 +95,12 @@
             <!-- 内部模块 -->
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-common-core</artifactId>
+                <artifactId>eap-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-common-ai</artifactId>
+                <artifactId>eap-enterprise</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -120,21 +116,6 @@
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
                 <artifactId>eap-llm-service</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-enterprise-tools</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-enterprise-data</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-task</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

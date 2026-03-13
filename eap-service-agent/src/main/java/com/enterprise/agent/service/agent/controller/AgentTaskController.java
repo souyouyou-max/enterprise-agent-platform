@@ -3,7 +3,7 @@ package com.enterprise.agent.service.agent.controller;
 import com.enterprise.agent.common.core.response.PageResult;
 import com.enterprise.agent.common.core.response.ResponseResult;
 import com.enterprise.agent.data.entity.AgentTask;
-import com.enterprise.agent.task.service.AgentTaskService;
+import com.enterprise.agent.service.agent.task.service.AgentTaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -18,10 +18,6 @@
         <!-- 内部模块 -->
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-task</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
             <artifactId>eap-agent-impl</artifactId>
         </dependency>
         <dependency>
@@ -30,11 +26,12 @@
         </dependency>
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-enterprise-tools</artifactId>
+            <artifactId>eap-enterprise</artifactId>
         </dependency>
+        <!-- Kafka（任务事件发布） -->
         <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-enterprise-data</artifactId>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
         </dependency>
 
         <!-- Spring Boot Web -->

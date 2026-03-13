@@ -30,7 +30,7 @@
         </dependency>
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-enterprise-data</artifactId>
+            <artifactId>eap-enterprise</artifactId>
         </dependency>
 
         <!-- Spring Boot Web -->
