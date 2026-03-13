@@ -21,19 +21,7 @@
         </dependency>
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-agent-planner</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-agent-executor</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-agent-reviewer</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-agent-communicator</artifactId>
+            <artifactId>eap-agent-impl</artifactId>
         </dependency>
         <dependency>
             <groupId>com.enterprise.agent</groupId>

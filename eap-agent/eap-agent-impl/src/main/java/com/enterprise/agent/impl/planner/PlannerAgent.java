@@ -1,4 +1,4 @@
-package com.enterprise.agent.planner;
+package com.enterprise.agent.impl.planner;
 
 import com.enterprise.agent.common.ai.service.LlmService;
 import com.enterprise.agent.common.core.enums.AgentRole;

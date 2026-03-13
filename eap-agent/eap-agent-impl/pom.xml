@@ -10,9 +10,9 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>eap-agent-executor</artifactId>
-    <name>EAP Agent Executor</name>
-    <description>ExecutorAgent：执行子任务，调用企业工具，支持重试</description>
+    <artifactId>eap-agent-impl</artifactId>
+    <name>EAP Agent Impl</name>
+    <description>Agent 实现层：PlannerAgent / ExecutorAgent / ReviewerAgent / CommunicatorAgent</description>
 
     <dependencies>
         <dependency>
@@ -30,6 +30,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

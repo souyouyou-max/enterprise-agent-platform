@@ -1,4 +1,4 @@
-package com.enterprise.agent.executor;
+package com.enterprise.agent.impl.executor;
 
 import com.enterprise.agent.common.ai.service.LlmService;
 import com.enterprise.agent.common.core.enums.AgentRole;

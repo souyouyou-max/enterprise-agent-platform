@@ -17,10 +17,7 @@
         <module>eap-common/eap-common-ai</module>
         <!-- Agent 核心层 -->
         <module>eap-agent/eap-agent-core</module>
-        <module>eap-agent/eap-agent-planner</module>
-        <module>eap-agent/eap-agent-executor</module>
-        <module>eap-agent/eap-agent-reviewer</module>
-        <module>eap-agent/eap-agent-communicator</module>
+        <module>eap-agent/eap-agent-impl</module>
         <!-- LLM 后端层 -->
         <module>eap-llm/eap-llm-service</module>
         <!-- 企业集成层 -->
@@ -91,22 +88,7 @@
             </dependency>
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-agent-planner</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-agent-executor</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-agent-reviewer</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-agent-communicator</artifactId>
+                <artifactId>eap-agent-impl</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

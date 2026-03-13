@@ -1,4 +1,4 @@
-package com.enterprise.agent.communicator;
+package com.enterprise.agent.impl.communicator;
 
 import com.enterprise.agent.common.ai.service.LlmService;
 import com.enterprise.agent.common.core.enums.AgentRole;
