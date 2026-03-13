@@ -15,21 +15,25 @@
         <!-- 公共层 -->
         <module>eap-common/eap-common-core</module>
         <module>eap-common/eap-common-ai</module>
-        <!-- Agent 核心层 -->
-        <module>eap-agent/eap-agent-core</module>
-        <module>eap-agent/eap-agent-impl</module>
         <!-- LLM 后端层 -->
         <module>eap-llm/eap-llm-service</module>
         <!-- 企业集成层 -->
-        <module>eap-enterprise/eap-enterprise-tools</module>
         <module>eap-enterprise/eap-enterprise-data</module>
-        <!-- 任务编排层 -->
-        <module>eap-task</module>
+        <module>eap-enterprise/eap-enterprise-tools</module>
+        <!-- Agent 核心层 -->
+        <module>eap-agent/eap-agent-core</module>
+        <module>eap-agent/eap-agent-impl</module>
         <!-- 业务场景层 -->
         <module>eap-knowledge</module>
         <module>eap-insight</module>
-        <!-- 主应用 -->
-        <module>eap-app</module>
+        <!-- 任务编排层 -->
+        <module>eap-task</module>
+        <!-- 微服务层 -->
+        <module>eap-gateway</module>
+        <module>eap-service-agent</module>
+        <module>eap-service-knowledge</module>
+        <module>eap-service-insight</module>
+        <module>eap-service-chat</module>
     </modules>
 
     <properties>
@@ -40,6 +44,8 @@
         <!-- Spring -->
         <spring-boot.version>3.3.5</spring-boot.version>
         <spring-ai.version>1.0.0-M6</spring-ai.version>
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
+        <spring-cloud-alibaba.version>2023.0.1.0</spring-cloud-alibaba.version>
         <!-- Data -->
         <mybatis-plus.version>3.5.9</mybatis-plus.version>
         <postgresql.version>42.7.4</postgresql.version>
@@ -69,6 +75,24 @@
                 <groupId>org.springframework.ai</groupId>
                 <artifactId>spring-ai-bom</artifactId>
                 <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Spring Cloud BOM -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Spring Cloud Alibaba BOM -->
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+                <version>${spring-cloud-alibaba.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -123,6 +147,30 @@
                 <groupId>com.enterprise.agent</groupId>
                 <artifactId>eap-insight</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+
+            <!-- Spring Cloud Gateway -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-gateway</artifactId>
+            </dependency>
+
+            <!-- Spring Cloud OpenFeign -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-openfeign</artifactId>
+            </dependency>
+
+            <!-- Spring Cloud LoadBalancer -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+            </dependency>
+
+            <!-- Nacos Discovery -->
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
             </dependency>
 
             <!-- MyBatis-Plus -->

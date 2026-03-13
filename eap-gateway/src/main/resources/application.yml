@@ -1,0 +1,49 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: eap-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: agent-service
+          uri: lb://eap-service-agent
+          predicates:
+            - Path=/api/v1/tasks/**
+        - id: knowledge-service
+          uri: lb://eap-service-knowledge
+          predicates:
+            - Path=/api/v1/knowledge/**
+        - id: insight-service
+          uri: lb://eap-service-insight
+          predicates:
+            - Path=/api/v1/insight/**
+        - id: chat-service
+          uri: lb://eap-service-chat
+          predicates:
+            - Path=/api/v1/chat/**
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        enabled: ${NACOS_ENABLED:false}
+  main:
+    web-application-type: reactive
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.enterprise.agent: DEBUG
+    org.springframework.cloud.gateway: INFO
+  pattern:
+    console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

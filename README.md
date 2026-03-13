@@ -600,6 +600,102 @@ public class ErpTool implements EnterpriseTool {
 
 ---
 
+## 微服务架构
+
+> 基于 Spring Cloud 2023.0.x + Spring Cloud Alibaba 2023.0.1.0 的微服务拆分方案
+
+### 服务列表
+
+| 服务 | 端口 | 描述 |
+|------|------|------|
+| eap-gateway | 8080 | API 网关（Spring Cloud Gateway），路由转发 |
+| eap-service-agent | 8081 | Agent 任务服务：任务创建/查询/重试/报告 + 企业工具 API |
+| eap-service-knowledge | 8082 | 知识问答服务：文档录入、语义检索、RAG 问答 |
+| eap-service-insight | 8083 | 数据洞察服务：自然语言 → SQL → 执行 → LLM 分析 |
+| eap-service-chat | 8084 | AI 交互中心：多轮对话统一入口，意图识别自动路由 |
+
+### 服务间调用关系
+
+```
+                    ┌─────────────────────────────┐
+                    │       Client（浏览器/App）     │
+                    └──────────────┬──────────────┘
+                                   │ HTTP
+                    ┌──────────────▼──────────────┐
+                    │      eap-gateway :8080        │
+                    │   Spring Cloud Gateway        │
+                    │  路由规则：                    │
+                    │  /api/v1/tasks/**  → :8081    │
+                    │  /api/v1/knowledge/** → :8082 │
+                    │  /api/v1/insight/**  → :8083  │
+                    │  /api/v1/chat/**     → :8084  │
+                    └──┬──────┬──────┬──────┬──────┘
+                       │      │      │      │  lb://
+          ┌────────────▼─┐ ┌──▼──┐ ┌▼──┐ ┌─▼─────────────┐
+          │ eap-service- │ │     │ │   │ │ eap-service-  │
+          │    agent     │ │know-│ │ins│ │    chat       │
+          │    :8081     │ │ledge│ │ight│ │    :8084      │
+          │              │ │:8082│ │:83│ │               │
+          │ - 任务CRUD    │ │     │ │   │ │ - 多轮对话     │
+          │ - Agent流水线 │ │-RAG │ │-NL│ │ - 意图识别     │
+          │ - 企业工具    │ │-向量│ │2BI│ │ - 路由分发     │
+          └──────────────┘ └─────┘ └───┘ └───────┬───────┘
+                 │               │          Feign │
+                 │         ┌─────┴──────────────  │
+                 │         │   跨服务 Feign 调用   ◄┘
+                 └────────►│  AgentServiceClient  │
+                           │ KnowledgeServiceClient│
+                           └──────────────────────┘
+```
+
+### Nacos 服务注册
+
+所有微服务默认关闭 Nacos 注册（`NACOS_ENABLED=false`），本地开发直连。
+生产环境设置 `NACOS_ENABLED=true` 与 `NACOS_ADDR=<nacos地址>` 启用服务发现。
+
+### Docker Compose 启动
+
+```bash
+# 克隆并构建
+git clone <repo-url>
+cd enterprise-agent-platform
+mvn clean package -DskipTests
+
+# 设置 LLM API Key
+export OPENAI_API_KEY=sk-your-key
+export LLM_PROVIDER=openai   # openai | claude | ollama
+
+# 一键启动所有服务（含基础设施）
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f eap-gateway
+docker-compose logs -f eap-service-agent
+```
+
+启动后访问：
+- 网关：http://localhost:8080
+- Agent 服务 Swagger：http://localhost:8081/swagger-ui.html
+- 知识服务 Swagger：http://localhost:8082/swagger-ui.html
+- 洞察服务 Swagger：http://localhost:8083/swagger-ui.html
+- 对话服务 Swagger：http://localhost:8084/swagger-ui.html
+- Nacos 控制台：http://localhost:8848/nacos
+
+### 本地开发启动顺序
+
+不使用 Docker 时，按以下顺序本地启动：
+
+1. **基础设施**（PostgreSQL、Redis、Kafka、Nacos 可选）
+2. **eap-service-agent**（端口 8081，含 DB 初始化）
+3. **eap-service-knowledge**（端口 8082）
+4. **eap-service-insight**（端口 8083）
+5. **eap-service-chat**（端口 8084）
+6. **eap-gateway**（端口 8080，最后启动）
+
+各服务均可独立运行（Nacos 默认关闭，服务间通过 Feign 直连或网关转发）。
+
+---
+
 ## 许可证
 
 MIT License © 2024 Enterprise Agent Platform Team
