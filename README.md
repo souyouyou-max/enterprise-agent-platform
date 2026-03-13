@@ -1,6 +1,6 @@
 # Enterprise Agent Platform (EAP)
 
-> 企业级 Agent 系统 | 分层架构 | 微服务部署 | 多 Agent 协作 | Spring AI | Java 17+
+> 机构风险远程管理机器人 | 企业级 Agent 系统 | 分层架构 | 微服务部署 | 多 Agent 协作 | Spring AI | Java 17+
 
 [![Java](https://img.shields.io/badge/Java-17+-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-brightgreen)](https://spring.io/projects/spring-boot)
@@ -10,9 +10,18 @@
 
 ## 项目简介
 
-Enterprise Agent Platform (EAP) 是一个基于华为云企业级 Agent 部署架构设计的生产就绪型多 Agent 系统。系统采用 **common / data / engine / gateway / service 分层架构**，通过多个专职 Agent（规划、执行、审查、通信）协作完成复杂的企业业务分析任务，并以 **Spring Cloud 微服务**方式独立部署。
+Enterprise Agent Platform (EAP) 是以**机构风险远程管理机器人**为核心业务场景的生产就绪型多 Agent 系统。系统采用 **common / data / engine / gateway / service 分层架构**，通过四个专职智能体协作完成机构稽核与风险管理任务，并以 **Spring Cloud 微服务**方式独立部署。
 
-**核心能力：**
+### 四智能体协作架构
+
+| 智能体 | 职责 | 核心能力 |
+|--------|------|----------|
+| **AI交互中心** (`InteractionCenterAgent`) | 统一对话入口，意图识别与路由 | 自然语言理解，自动调用其他三个 Agent |
+| **线索发现** (`ClueDiscoveryAgent`) | 各审计主题疑点筛查 | 采购/财务/合同三主题线索扫描，按风险等级分类 |
+| **风险透视分析** (`RiskAnalysisAgent`) | 全国机构多维风险评分 | 经营/合规/财务/采购四维度量化评分，综合报告生成 |
+| **监测预警** (`MonitoringAgent`) | 风险量化评分与动态预警 | 阈值规则管理，红/橙/黄三级预警推送 |
+
+**平台能力：**
 - 自然语言目标 → 自动任务规划 → 工具调用执行 → 质量审查 → 报告生成
 - 支持 OpenAI / Claude / Ollama 三种 LLM 后端热切换
 - Redis 缓存 LLM 响应（TTL 1小时），降低成本

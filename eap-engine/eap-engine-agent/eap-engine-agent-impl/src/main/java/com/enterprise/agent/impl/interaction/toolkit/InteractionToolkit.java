@@ -4,8 +4,11 @@ import com.enterprise.agent.core.context.AgentResult;
 import com.enterprise.agent.core.dispatcher.AgentDispatcher;
 import com.enterprise.agent.data.entity.AgentTask;
 import com.enterprise.agent.data.service.AgentTaskDataService;
+import com.enterprise.agent.impl.clue.ClueDiscoveryAgent;
 import com.enterprise.agent.impl.insight.InsightAgent;
+import com.enterprise.agent.impl.monitoring.MonitoringAgent;
 import com.enterprise.agent.impl.procurement.ProcurementAuditAgent;
+import com.enterprise.agent.impl.risk.RiskAnalysisAgent;
 import com.enterprise.agent.dataservice.insight.model.InsightResult;
 import com.enterprise.agent.dataservice.knowledge.service.KnowledgeQaService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,9 @@ public class InteractionToolkit {
     private final InsightAgent insightAgent;
     private final AgentTaskDataService agentTaskDataService;
     private final ProcurementAuditAgent procurementAuditAgent;
+    private final ClueDiscoveryAgent clueDiscoveryAgent;
+    private final RiskAnalysisAgent riskAnalysisAgent;
+    private final MonitoringAgent monitoringAgent;
 
     /**
      * 启动完整 Planner→Executor→Reviewer→Communicator 业务分析流水线
@@ -90,6 +96,48 @@ public class InteractionToolkit {
             return result.getOutput();
         }
         return "招采稽核执行未完成，部分结果：" + result.getOutput();
+    }
+
+    /**
+     * 线索发现：扫描机构各审计主题的疑点线索
+     */
+    @Tool(description = "线索发现：扫描机构各审计主题（采购/财务/合同）的疑点线索，识别超付、未招标、利益冲突等违规风险。" +
+            "orgCode为机构编码。")
+    public String discoverClues(String orgCode) {
+        log.info("[InteractionToolkit] discoverClues, orgCode={}", orgCode);
+        AgentResult result = clueDiscoveryAgent.scanAll(orgCode);
+        if (result.isSuccess()) {
+            return result.getOutput();
+        }
+        return "线索发现执行未完成，部分结果：" + result.getOutput();
+    }
+
+    /**
+     * 风险透视：对机构进行多维度风险评分和综合分析
+     */
+    @Tool(description = "风险透视：对机构进行经营/合规/财务/采购四维度风险评分，生成综合风险画像报告。" +
+            "orgCode为机构编码。")
+    public String analyzeRisk(String orgCode) {
+        log.info("[InteractionToolkit] analyzeRisk, orgCode={}", orgCode);
+        AgentResult result = riskAnalysisAgent.analyzeOrgRisk(orgCode);
+        if (result.isSuccess()) {
+            return result.getOutput();
+        }
+        return "风险透视分析未完成，部分结果：" + result.getOutput();
+    }
+
+    /**
+     * 监测预警：检查机构风险指标阈值，生成预警通知
+     */
+    @Tool(description = "监测预警：检查机构各项风险指标是否超过阈值，生成分级预警通知和处置建议。" +
+            "orgCode为机构编码。")
+    public String checkMonitoring(String orgCode) {
+        log.info("[InteractionToolkit] checkMonitoring, orgCode={}", orgCode);
+        AgentResult result = monitoringAgent.monitorOrg(orgCode);
+        if (result.isSuccess()) {
+            return result.getOutput();
+        }
+        return "监测预警执行未完成，部分结果：" + result.getOutput();
     }
 
     /**
