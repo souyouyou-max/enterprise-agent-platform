@@ -1,6 +1,6 @@
 # Enterprise Agent Platform (EAP)
 
-> 企业级 Agent 系统 | 四层架构 | 微服务部署 | 多 Agent 协作 | Spring AI | Java 17+
+> 企业级 Agent 系统 | 分层架构 | 微服务部署 | 多 Agent 协作 | Spring AI | Java 17+
 
 [![Java](https://img.shields.io/badge/Java-17+-orange)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-brightgreen)](https://spring.io/projects/spring-boot)
@@ -10,7 +10,7 @@
 
 ## 项目简介
 
-Enterprise Agent Platform (EAP) 是一个基于华为云企业级 Agent 部署架构设计的生产就绪型多 Agent 系统。系统采用**四层架构**，通过多个专职 Agent（规划、执行、审查、通信）协作完成复杂的企业业务分析任务，并以 **Spring Cloud 微服务**方式独立部署。
+Enterprise Agent Platform (EAP) 是一个基于华为云企业级 Agent 部署架构设计的生产就绪型多 Agent 系统。系统采用 **common / data / engine / gateway / service 分层架构**，通过多个专职 Agent（规划、执行、审查、通信）协作完成复杂的企业业务分析任务，并以 **Spring Cloud 微服务**方式独立部署。
 
 **核心能力：**
 - 自然语言目标 → 自动任务规划 → 工具调用执行 → 质量审查 → 报告生成

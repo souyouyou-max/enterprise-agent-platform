@@ -5,14 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.enterprise.agent</groupId>
-        <artifactId>enterprise-agent-platform</artifactId>
+        <artifactId>eap-engine</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>eap-llm-service</artifactId>
-    <name>EAP LLM Service</name>
-    <description>LLM 后端层：Spring AI 多模型热切换 + Redis 缓存（TTL 1h）</description>
+    <artifactId>eap-engine-llm</artifactId>
+    <name>EAP Engine LLM</name>
+    <description>引擎层-LLM：Spring AI 多模型热切换 + Redis 缓存（TTL 1h）</description>
 
     <dependencies>
         <dependency>

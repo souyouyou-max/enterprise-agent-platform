@@ -5,40 +5,63 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.enterprise.agent</groupId>
-        <artifactId>enterprise-agent-platform</artifactId>
+        <artifactId>eap-engine</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>eap-agent-impl</artifactId>
-    <name>EAP Agent Impl</name>
-    <description>Agent 实现层：PlannerAgent / ExecutorAgent / ReviewerAgent / CommunicatorAgent</description>
+    <artifactId>eap-engine-data-service</artifactId>
+    <name>EAP Engine Data Service</name>
+    <description>引擎层-数据服务：知识问答（RAG）+ 智能数据洞察（NL2BI）</description>
 
     <dependencies>
+        <!-- 公共接口（LlmService / EmbeddingService / core） -->
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-agent-core</artifactId>
+            <artifactId>eap-common</artifactId>
         </dependency>
+
+        <!-- LLM 服务（EmbeddingModel 自动配置） -->
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-enterprise</artifactId>
+            <artifactId>eap-engine-llm</artifactId>
         </dependency>
+
+        <!-- 数据层（数据实体 + 工具） -->
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-data-service</artifactId>
+            <artifactId>eap-data</artifactId>
         </dependency>
+
+        <!-- Spring AI Core：EmbeddingModel 接口 -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-core</artifactId>
         </dependency>
+
+        <!-- MyBatis-Plus：知识文档 ORM -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+        </dependency>
+
+        <!-- JDBC：动态 SQL 执行 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
+
+        <!-- Jackson：向量 JSON 序列化 / 查询结果序列化 -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

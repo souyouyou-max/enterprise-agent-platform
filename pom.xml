@@ -9,22 +9,23 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Enterprise Agent Platform</name>
-    <description>企业级 Agent 系统 - 四层架构（UI / Agent Core / LLM Backend / Enterprise Integration）</description>
+    <description>企业级 Agent 系统 - 分层架构（common / data / engine / gateway / service）</description>
 
     <modules>
-        <!-- 公共层 -->
+        <!-- 公共基础层 -->
         <module>eap-common</module>
-        <!-- LLM 后端层 -->
-        <module>eap-llm/eap-llm-service</module>
-        <!-- 企业集成层 -->
-        <module>eap-enterprise</module>
-        <!-- Agent 核心层 -->
-        <module>eap-agent/eap-agent-core</module>
-        <module>eap-agent/eap-agent-impl</module>
-        <!-- 数据服务层 -->
-        <module>eap-data-service</module>
-        <!-- 微服务层 -->
+        <!-- 数据层 -->
+        <module>eap-data</module>
+        <!-- 引擎层 -->
+        <module>eap-engine</module>
+        <module>eap-engine/eap-engine-llm</module>
+        <module>eap-engine/eap-engine-agent</module>
+        <module>eap-engine/eap-engine-agent/eap-engine-agent-core</module>
+        <module>eap-engine/eap-engine-agent/eap-engine-agent-impl</module>
+        <module>eap-engine/eap-engine-data-service</module>
+        <!-- 网关层 -->
         <module>eap-gateway</module>
+        <!-- 微服务层 -->
         <module>eap-service-agent</module>
         <module>eap-service-knowledge</module>
         <module>eap-service-insight</module>
@@ -100,27 +101,27 @@
             </dependency>
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-enterprise</artifactId>
+                <artifactId>eap-data</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-agent-core</artifactId>
+                <artifactId>eap-engine-llm</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-agent-impl</artifactId>
+                <artifactId>eap-engine-agent-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-llm-service</artifactId>
+                <artifactId>eap-engine-agent-impl</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-data-service</artifactId>
+                <artifactId>eap-engine-data-service</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

@@ -5,39 +5,23 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.enterprise.agent</groupId>
-        <artifactId>enterprise-agent-platform</artifactId>
+        <artifactId>eap-engine-agent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>eap-enterprise</artifactId>
-    <name>EAP Enterprise</name>
-    <description>企业集成层：数据实体（data）+ 企业工具（tools）</description>
+    <artifactId>eap-engine-agent-core</artifactId>
+    <name>EAP Engine Agent Core</name>
+    <description>引擎层-Agent-核心：BaseAgent 抽象、AgentContext、AgentResult、AgentOrchestrator</description>
 
     <dependencies>
         <dependency>
             <groupId>com.enterprise.agent</groupId>
             <artifactId>eap-common</artifactId>
         </dependency>
-        <!-- MyBatis-Plus（数据层 ORM） -->
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-        </dependency>
-        <!-- PostgreSQL Driver -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-        </dependency>
-        <!-- Spring AI Core（工具层） -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-core</artifactId>
-        </dependency>
-        <!-- Jackson -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -47,6 +31,14 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
     </dependencies>
 </project>

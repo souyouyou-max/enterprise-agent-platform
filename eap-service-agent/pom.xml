@@ -18,15 +18,15 @@
         <!-- 内部模块 -->
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-agent-impl</artifactId>
+            <artifactId>eap-engine-agent-impl</artifactId>
         </dependency>
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-llm-service</artifactId>
+            <artifactId>eap-engine-llm</artifactId>
         </dependency>
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-enterprise</artifactId>
+            <artifactId>eap-data</artifactId>
         </dependency>
         <!-- Kafka（任务事件发布） -->
         <dependency>

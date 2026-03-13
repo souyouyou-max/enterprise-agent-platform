@@ -18,19 +18,15 @@
         <!-- 内部模块 -->
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-agent-impl</artifactId>
+            <artifactId>eap-engine-agent-impl</artifactId>
         </dependency>
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-knowledge</artifactId>
+            <artifactId>eap-engine-data-service</artifactId>
         </dependency>
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-insight</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-llm-service</artifactId>
+            <artifactId>eap-engine-llm</artifactId>
         </dependency>
 
         <!-- Spring Boot Web -->
