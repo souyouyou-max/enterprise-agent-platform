@@ -28,6 +28,14 @@
             <groupId>com.enterprise.agent</groupId>
             <artifactId>eap-enterprise-tools</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-knowledge</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-insight</artifactId>
+        </dependency>
 
         <!-- Spring Boot Web -->
         <dependency>

@@ -25,6 +25,9 @@
         <module>eap-enterprise/eap-enterprise-data</module>
         <!-- 任务编排层 -->
         <module>eap-task</module>
+        <!-- 业务场景层 -->
+        <module>eap-knowledge</module>
+        <module>eap-insight</module>
         <!-- 主应用 -->
         <module>eap-app</module>
     </modules>
@@ -109,6 +112,16 @@
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
                 <artifactId>eap-task</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.enterprise.agent</groupId>
+                <artifactId>eap-knowledge</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.enterprise.agent</groupId>
+                <artifactId>eap-insight</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

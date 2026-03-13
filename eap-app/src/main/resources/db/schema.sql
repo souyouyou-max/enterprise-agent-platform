@@ -72,6 +72,25 @@ CREATE TRIGGER update_agent_task_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================
+-- 知识文档表（eap-knowledge RAG 模块）
+-- ============================================================
+CREATE TABLE IF NOT EXISTS knowledge_document (
+    id          BIGSERIAL PRIMARY KEY,
+    title       VARCHAR(200) NOT NULL,
+    content     TEXT         NOT NULL,
+    category    VARCHAR(100),
+    embedding   TEXT,                        -- JSON 格式存储 float 向量
+    created_at  TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE knowledge_document IS '企业知识文档表（向量化存储）';
+COMMENT ON COLUMN knowledge_document.embedding IS 'float 数组 JSON，格式：[0.12, -0.34, ...]';
+COMMENT ON COLUMN knowledge_document.category IS '文档分类，如：HR / 财务 / 法务 / 产品';
+
+CREATE INDEX IF NOT EXISTS idx_knowledge_doc_category ON knowledge_document(category);
+CREATE INDEX IF NOT EXISTS idx_knowledge_doc_created_at ON knowledge_document(created_at DESC);
+
+-- ============================================================
 -- 测试数据（可选）
 -- ============================================================
 -- INSERT INTO agent_task (task_name, goal, status) VALUES
