@@ -28,6 +28,10 @@
             <artifactId>eap-insight</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-knowledge</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-core</artifactId>
         </dependency>

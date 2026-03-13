@@ -102,6 +102,93 @@ enterprise-agent-platform/
 
 ---
 
+## AI 交互中心
+
+### 架构角色映射
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│               AI 交互中心（InteractionCenterAgent）               │
+│                    统一入口 / 意图识别 / 路由                      │
+└───────┬─────────────────┬────────────────┬──────────────────────┘
+        │                 │                │
+        ▼                 ▼                ▼
+┌───────────────┐ ┌───────────────┐ ┌───────────────┐
+│  线索发现      │ │  风险透视      │ │  监测预警      │
+│  (Planner     │ │  (Knowledge   │ │  (Insight     │
+│   Pipeline)   │ │   QA / RAG)   │ │   / NL2BI)    │
+└───────────────┘ └───────────────┘ └───────────────┘
+```
+
+| 业务场景 | 对应 Agent | 触发关键词示例 |
+|---------|-----------|--------------|
+| 线索发现 / 流程自动化 | PlannerAgent → ExecutorAgent → ReviewerAgent → CommunicatorAgent | "帮我分析…并生成报告"、"制定计划"、"执行任务" |
+| 风险透视 / 知识问答 | KnowledgeQaService（RAG） | "年假怎么申请"、"公司政策"、"规章制度" |
+| 监测预警 / 数据洞察 | InsightAgent（NL2BI） | "哪个部门销售额最高"、"统计…数据"、"本季度趋势" |
+| 一般问答 | LLM 直接对话 | 问候、概念解释、闲聊 |
+
+### 多轮对话流程
+
+```
+用户发送消息
+      │
+      ▼
+POST /api/v1/chat  {sessionId, message}
+      │
+      ▼
+InteractionCenterAgent.chat()
+      │
+      ├─ [1] sanitizeInput()          # 防 Prompt 注入清洗
+      │
+      ├─ [2] ConversationSession      # 写入用户消息（滑动窗口 20条）
+      │
+      ├─ [3] detectIntent()           # LLM 意图分类
+      │       └─ 输出：PLANNING / KNOWLEDGE / INSIGHT / GENERAL
+      │
+      ├─ [4] 路由执行
+      │       ├─ PLANNING   → orchestrator.runPipeline()
+      │       │               Planner→Executor→Reviewer→Communicator
+      │       ├─ KNOWLEDGE  → KnowledgeQaService.answer()
+      │       ├─ INSIGHT    → InsightAgent.investigate()
+      │       └─ GENERAL    → LlmService（带历史上下文）
+      │
+      ├─ [5] ConversationSession      # 写入助手回复
+      │
+      └─ [6] 返回 InteractionResult
+               {sessionId, agentType, response, usedTools, timestamp}
+```
+
+### 对话 API
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/v1/chat` | 发送消息（核心对话接口） |
+| POST | `/api/v1/chat/session` | 创建新会话，返回 `{sessionId}` |
+| DELETE | `/api/v1/chat/session/{sessionId}` | 清除会话历史 |
+| GET | `/api/v1/chat/session/{sessionId}/history` | 获取历史消息列表 |
+
+```bash
+# 1. 创建会话
+curl -X POST http://localhost:8080/api/v1/chat/session
+# → {"sessionId": "550e8400-e29b-41d4-a716-446655440000"}
+
+# 2. 多轮对话（意图识别自动路由）
+curl -X POST http://localhost:8080/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"sessionId":"550e8400-e29b-41d4-a716-446655440000","message":"分析本季度华南区销售数据"}'
+# → agentType: INSIGHT，调用 InsightAgent（NL2BI）
+
+curl -X POST http://localhost:8080/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"sessionId":"550e8400-e29b-41d4-a716-446655440000","message":"年假怎么申请？"}'
+# → agentType: KNOWLEDGE，调用 KnowledgeQaService（RAG）
+
+# 3. 查看历史
+curl http://localhost:8080/api/v1/chat/session/550e8400-e29b-41d4-a716-446655440000/history
+```
+
+---
+
 ## 多 Agent 协作流程
 
 ```
