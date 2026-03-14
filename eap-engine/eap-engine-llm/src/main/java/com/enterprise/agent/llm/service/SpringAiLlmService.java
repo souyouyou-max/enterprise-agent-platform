@@ -49,7 +49,7 @@ public class SpringAiLlmService implements LlmService {
             Prompt prompt = new Prompt(messages);
             ChatResponse response = chatModel.call(prompt);
 
-            String content = response.getResult().getOutput().getContent();
+            String content = response.getResult().getOutput().getText();
             log.debug("[LlmService] LLM 响应长度: {} chars", content != null ? content.length() : 0);
 
             return LlmResponse.builder()
