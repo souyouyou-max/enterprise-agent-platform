@@ -32,7 +32,7 @@ public class AgentTaskService {
 
         // 2. 发布创建事件
         publishEvent(AgentTaskEvent.builder()
-                .taskId(task.getId())
+                .taskId(String.valueOf(task.getId()))
                 .taskName(taskName)
                 .goal(goal)
                 .currentStatus(TaskStatus.PENDING)
@@ -75,7 +75,7 @@ public class AgentTaskService {
 
         dataService.updateStatus(taskId, TaskStatus.PENDING.name());
         publishEvent(AgentTaskEvent.builder()
-                .taskId(taskId)
+                .taskId(String.valueOf(taskId))
                 .taskName(task.getTaskName())
                 .previousStatus(TaskStatus.FAILED)
                 .currentStatus(TaskStatus.PENDING)

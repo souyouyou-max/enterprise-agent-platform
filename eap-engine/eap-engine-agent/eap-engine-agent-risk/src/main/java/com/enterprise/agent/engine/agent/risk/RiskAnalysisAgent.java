@@ -99,7 +99,7 @@ public class RiskAnalysisAgent extends BaseAgent {
                 "5. 生成机构综合风险分析报告（含改进建议）",
                 orgCode);
         AgentContext context = AgentContext.builder()
-                .taskId(System.currentTimeMillis())
+                .taskId(String.valueOf(System.currentTimeMillis()))
                 .goal(goal)
                 .build();
         return execute(context);

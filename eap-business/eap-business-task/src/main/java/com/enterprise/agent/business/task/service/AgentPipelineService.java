@@ -44,7 +44,7 @@ public class AgentPipelineService {
 
         // 构建上下文
         AgentContext context = AgentContext.builder()
-                .taskId(taskId)
+                .taskId(String.valueOf(taskId))
                 .taskName(taskName)
                 .goal(goal)
                 .reportStyle(ReportStyle.DETAILED)
@@ -91,7 +91,7 @@ public class AgentPipelineService {
             }
 
             publishEvent(AgentTaskEvent.builder()
-                    .taskId(taskId).taskName(taskName)
+                    .taskId(String.valueOf(taskId)).taskName(taskName)
                     .currentStatus(TaskStatus.REVIEWING)
                     .eventType("REVIEWED")
                     .reviewScore(context.getReviewScore())
@@ -118,7 +118,7 @@ public class AgentPipelineService {
             );
 
             publishEvent(AgentTaskEvent.builder()
-                    .taskId(taskId).taskName(taskName)
+                    .taskId(String.valueOf(taskId)).taskName(taskName)
                     .previousStatus(TaskStatus.COMMUNICATING)
                     .currentStatus(TaskStatus.COMPLETED)
                     .eventType("COMPLETED")
@@ -167,7 +167,7 @@ public class AgentPipelineService {
     private void updateStatus(Long taskId, TaskStatus previous, TaskStatus current) {
         dataService.updateStatus(taskId, current.name());
         publishEvent(AgentTaskEvent.builder()
-                .taskId(taskId)
+                .taskId(String.valueOf(taskId))
                 .previousStatus(previous)
                 .currentStatus(current)
                 .eventType("STATUS_CHANGED")
@@ -178,7 +178,7 @@ public class AgentPipelineService {
     private void failTask(Long taskId, String taskName, String errorMessage) {
         dataService.updateStatus(taskId, TaskStatus.FAILED.name());
         publishEvent(AgentTaskEvent.builder()
-                .taskId(taskId).taskName(taskName)
+                .taskId(String.valueOf(taskId)).taskName(taskName)
                 .currentStatus(TaskStatus.FAILED)
                 .eventType("FAILED")
                 .message(errorMessage)

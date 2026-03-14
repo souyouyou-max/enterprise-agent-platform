@@ -17,7 +17,7 @@ import java.util.Map;
 public class AgentContext {
 
     /** 数据库任务 ID */
-    private Long taskId;
+    private String taskId;
 
     /** 用户目标 */
     private String goal;

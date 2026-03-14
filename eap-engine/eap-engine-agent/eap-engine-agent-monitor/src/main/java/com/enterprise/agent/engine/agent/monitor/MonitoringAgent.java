@@ -99,7 +99,7 @@ public class MonitoringAgent extends BaseAgent {
                 "最终输出：预警汇总报告，含各级预警数量、重点关注指标和处置建议。",
                 orgCode);
         AgentContext context = AgentContext.builder()
-                .taskId(System.currentTimeMillis())
+                .taskId(String.valueOf(System.currentTimeMillis()))
                 .goal(goal)
                 .build();
         return execute(context);
@@ -116,7 +116,7 @@ public class MonitoringAgent extends BaseAgent {
                 "请对机构【%s】执行风险指标阈值检查，列出所有超阈值指标及其预警级别。",
                 orgCode);
         AgentContext context = AgentContext.builder()
-                .taskId(System.currentTimeMillis())
+                .taskId(String.valueOf(System.currentTimeMillis()))
                 .goal(goal)
                 .build();
         return execute(context);

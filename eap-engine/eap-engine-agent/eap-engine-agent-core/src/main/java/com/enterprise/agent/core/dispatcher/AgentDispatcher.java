@@ -75,7 +75,7 @@ public class AgentDispatcher {
         log.info("[Dispatcher] runPipeline, goal={}", goal.substring(0, Math.min(50, goal.length())));
 
         AgentContext context = AgentContext.builder()
-                .taskId(System.currentTimeMillis())
+                .taskId(String.valueOf(System.currentTimeMillis()))
                 .taskName("Dispatcher-Pipeline")
                 .goal(goal)
                 .reportStyle(ReportStyle.DETAILED)

@@ -94,7 +94,7 @@ public class ClueDiscoveryAgent extends BaseAgent {
                 "请对机构【%s】执行%s主题的疑点线索扫描，识别异常数据并按风险等级输出线索清单和核查建议。",
                 orgCode, topic);
         AgentContext context = AgentContext.builder()
-                .taskId(System.currentTimeMillis())
+                .taskId(String.valueOf(System.currentTimeMillis()))
                 .goal(goal)
                 .build();
         return execute(context);
@@ -115,7 +115,7 @@ public class ClueDiscoveryAgent extends BaseAgent {
                 "最后生成线索发现分析报告，含高/中/低风险线索汇总和核查建议。",
                 orgCode);
         AgentContext context = AgentContext.builder()
-                .taskId(System.currentTimeMillis())
+                .taskId(String.valueOf(System.currentTimeMillis()))
                 .goal(goal)
                 .build();
         return execute(context);

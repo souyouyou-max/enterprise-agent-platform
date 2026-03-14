@@ -179,7 +179,7 @@ public class InteractionCenterAgent extends BaseAgent {
     public String runAgentPipeline(String goal) {
         log.info("[InteractionCenter] 调用 AgentPipeline, goal={}", goal.substring(0, Math.min(50, goal.length())));
         AgentContext context = AgentContext.builder()
-                .taskId(System.currentTimeMillis())
+                .taskId(String.valueOf(System.currentTimeMillis()))
                 .taskName("交互中心发起的任务")
                 .goal(goal)
                 .reportStyle(ReportStyle.SUMMARY)
