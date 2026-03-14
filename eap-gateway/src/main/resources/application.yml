@@ -7,30 +7,38 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: agent-service
-          uri: lb://eap-service-agent
+        - id: task-api
+          uri: lb://eap-app
           predicates:
             - Path=/api/v1/tasks/**
-        - id: knowledge-service
-          uri: lb://eap-service-knowledge
+        - id: knowledge-api
+          uri: lb://eap-app
           predicates:
             - Path=/api/v1/knowledge/**
-        - id: insight-service
-          uri: lb://eap-service-insight
+        - id: insight-api
+          uri: lb://eap-app
           predicates:
             - Path=/api/v1/insight/**
-        - id: chat-service
-          uri: lb://eap-service-chat
+        - id: chat-api
+          uri: lb://eap-app
           predicates:
             - Path=/api/v1/chat/**
-        - id: procurement-audit
-          uri: lb://eap-service-agent
+        - id: procurement-audit-api
+          uri: lb://eap-app
           predicates:
             - Path=/api/v1/procurement-audit/**
-        - id: risk-management
-          uri: lb://eap-service-agent
+        - id: risk-management-api
+          uri: lb://eap-app
           predicates:
             - Path=/api/v1/risk-management/**
+        - id: audit-engine-api
+          uri: lb://eap-app
+          predicates:
+            - Path=/api/v1/audit-engine/**
+        - id: enterprise-api
+          uri: lb://eap-app
+          predicates:
+            - Path=/api/v1/enterprise/**
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
     nacos:

@@ -13,10 +13,12 @@
     <artifactId>eap-engine-agent</artifactId>
     <packaging>pom</packaging>
     <name>EAP Engine Agent</name>
-    <description>引擎层-Agent：Agent 核心抽象（core）+ Agent 实现（impl）</description>
+    <description>引擎层-Agent：Agent 核心抽象（core）+ 三大业务 Agent（clue/risk/monitor）</description>
 
     <modules>
         <module>eap-engine-agent-core</module>
-        <module>eap-engine-agent-impl</module>
+        <module>eap-engine-agent-clue</module>
+        <module>eap-engine-agent-risk</module>
+        <module>eap-engine-agent-monitor</module>
     </modules>
 </project>

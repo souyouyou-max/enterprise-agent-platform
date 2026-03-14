@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.enterprise.agent</groupId>
+        <artifactId>enterprise-agent-platform</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>eap-business-report</artifactId>
+    <name>EAP Business Report</name>
+    <description>业务层-报告生成：CommunicatorAgent + 风险管理接口（线索发现/风险透视/监测预警）</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-engine-agent-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-engine-llm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-engine-agent-clue</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-engine-agent-risk</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-engine-agent-monitor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+    </dependencies>
+</project>

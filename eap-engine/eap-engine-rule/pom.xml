@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.enterprise.agent</groupId>
+        <artifactId>eap-engine</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>eap-engine-rule</artifactId>
+    <name>EAP Engine Rule</name>
+    <description>引擎层-规则引擎：SQL审计规则接口定义 + 四大规则实现（未招标/化整为零/围标串标/利益冲突）</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-data-repository</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

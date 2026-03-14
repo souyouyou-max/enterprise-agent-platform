@@ -1,0 +1,165 @@
+package com.enterprise.agent.business.chat.toolkit;
+
+import com.enterprise.agent.core.context.AgentResult;
+import com.enterprise.agent.core.dispatcher.AgentDispatcher;
+import com.enterprise.agent.data.entity.AgentTask;
+import com.enterprise.agent.data.service.AgentTaskDataService;
+import com.enterprise.agent.engine.agent.clue.ClueDiscoveryAgent;
+import com.enterprise.agent.business.chat.InsightAgent;
+import com.enterprise.agent.engine.agent.monitor.MonitoringAgent;
+import com.enterprise.agent.business.screening.ProcurementAuditAgent;
+import com.enterprise.agent.engine.agent.risk.RiskAnalysisAgent;
+import com.enterprise.agent.dataservice.insight.model.InsightResult;
+import com.enterprise.agent.dataservice.knowledge.service.KnowledgeQaService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.stereotype.Component;
+
+/**
+ * InteractionToolkit - 交互中心 Agent 专属技能集
+ * <p>
+ * 将各专业 Agent 和业务服务封装为可供 LLM 调用的工具，
+ * 实现 LLM 自主决策路由（替代硬编码 switch-case 意图识别）。
+ * <p>
+ * 注意：agentDispatcher 通过构造器注入，无循环依赖风险，
+ * 因为 AgentDispatcher 内部的 agents 列表使用 @Lazy 延迟注入。
+ */
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class InteractionToolkit {
+
+    private final AgentDispatcher agentDispatcher;
+    private final KnowledgeQaService knowledgeQaService;
+    private final InsightAgent insightAgent;
+    private final AgentTaskDataService agentTaskDataService;
+    private final ProcurementAuditAgent procurementAuditAgent;
+    private final ClueDiscoveryAgent clueDiscoveryAgent;
+    private final RiskAnalysisAgent riskAnalysisAgent;
+    private final MonitoringAgent monitoringAgent;
+
+    /**
+     * 启动完整 Planner→Executor→Reviewer→Communicator 业务分析流水线
+     */
+    @Tool(description = "启动完整的多步骤业务分析流水线（规划→执行→审查→报告），适用于复杂业务目标，" +
+            "如：分析销售数据并生成报告、执行多维度分析任务等。返回完整的分析报告。")
+    public String runFullPipeline(String goal) {
+        log.info("[InteractionToolkit] runFullPipeline, goal={}", goal.substring(0, Math.min(50, goal.length())));
+        AgentResult result = agentDispatcher.runPipeline(goal);
+        if (result.isSuccess()) {
+            return result.getOutput();
+        }
+        return "流水线执行未完全成功，部分结果：" + result.getOutput();
+    }
+
+    /**
+     * 查询企业知识库（RAG）
+     */
+    @Tool(description = "查询企业内部知识库，回答与公司规章制度、内部流程、HR政策等相关的问题，" +
+            "如：年假申请流程、报销政策、入职手续等。")
+    public String queryKnowledgeBase(String question) {
+        log.info("[InteractionToolkit] queryKnowledgeBase, question={}", question.substring(0, Math.min(50, question.length())));
+        return knowledgeQaService.answer(question);
+    }
+
+    /**
+     * 调用数据洞察 Agent 分析业务数据（NL2BI）
+     */
+    @Tool(description = "分析企业业务数据，支持自然语言数据查询和洞察，" +
+            "如：哪个部门销售额最高、本季度增长趋势、客户分布情况等。返回分析结论和执行的SQL。")
+    public String analyzeBusinessData(String question) {
+        log.info("[InteractionToolkit] analyzeBusinessData, question={}", question.substring(0, Math.min(50, question.length())));
+        InsightResult result = insightAgent.investigate(question);
+        if (!result.isSuccess()) {
+            return "数据分析失败：" + result.getErrorMessage();
+        }
+        StringBuilder sb = new StringBuilder();
+        if (result.getAnalysis() != null) {
+            sb.append(result.getAnalysis());
+        }
+        if (result.getGeneratedSql() != null) {
+            sb.append("\n\n> 执行SQL：`").append(result.getGeneratedSql()).append("`");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 执行招采稽核分析
+     */
+    @Tool(description = "执行招采稽核分析，识别大额未招标、化整为零、围标串标、利益输送等违规行为。" +
+            "orgCode为机构编码，如未提供则使用默认机构。")
+    public String runProcurementAudit(String orgCode) {
+        log.info("[InteractionToolkit] runProcurementAudit, orgCode={}", orgCode);
+        AgentResult result = procurementAuditAgent.auditAll(orgCode);
+        if (result.isSuccess()) {
+            return result.getOutput();
+        }
+        return "招采稽核执行未完成，部分结果：" + result.getOutput();
+    }
+
+    /**
+     * 线索发现：扫描机构各审计主题的疑点线索
+     */
+    @Tool(description = "线索发现：扫描机构各审计主题（采购/财务/合同）的疑点线索，识别超付、未招标、利益冲突等违规风险。" +
+            "orgCode为机构编码。")
+    public String discoverClues(String orgCode) {
+        log.info("[InteractionToolkit] discoverClues, orgCode={}", orgCode);
+        AgentResult result = clueDiscoveryAgent.scanAll(orgCode);
+        if (result.isSuccess()) {
+            return result.getOutput();
+        }
+        return "线索发现执行未完成，部分结果：" + result.getOutput();
+    }
+
+    /**
+     * 风险透视：对机构进行多维度风险评分和综合分析
+     */
+    @Tool(description = "风险透视：对机构进行经营/合规/财务/采购四维度风险评分，生成综合风险画像报告。" +
+            "orgCode为机构编码。")
+    public String analyzeRisk(String orgCode) {
+        log.info("[InteractionToolkit] analyzeRisk, orgCode={}", orgCode);
+        AgentResult result = riskAnalysisAgent.analyzeOrgRisk(orgCode);
+        if (result.isSuccess()) {
+            return result.getOutput();
+        }
+        return "风险透视分析未完成，部分结果：" + result.getOutput();
+    }
+
+    /**
+     * 监测预警：检查机构风险指标阈值，生成预警通知
+     */
+    @Tool(description = "监测预警：检查机构各项风险指标是否超过阈值，生成分级预警通知和处置建议。" +
+            "orgCode为机构编码。")
+    public String checkMonitoring(String orgCode) {
+        log.info("[InteractionToolkit] checkMonitoring, orgCode={}", orgCode);
+        AgentResult result = monitoringAgent.monitorOrg(orgCode);
+        if (result.isSuccess()) {
+            return result.getOutput();
+        }
+        return "监测预警执行未完成，部分结果：" + result.getOutput();
+    }
+
+    /**
+     * 查询任务执行状态
+     */
+    @Tool(description = "根据任务ID查询Agent任务的执行状态（PENDING/EXECUTING/COMPLETED/FAILED）和基本信息。" +
+            "taskId为系统分配的任务唯一标识数字。")
+    public String getTaskStatus(Long taskId) {
+        log.info("[InteractionToolkit] getTaskStatus, taskId={}", taskId);
+        AgentTask task = agentTaskDataService.getById(taskId);
+        if (task == null) {
+            return String.format("{\"found\":false,\"taskId\":%d,\"message\":\"任务不存在\"}", taskId);
+        }
+        return String.format(
+                "{\"found\":true,\"taskId\":%d,\"taskName\":\"%s\",\"status\":\"%s\"," +
+                        "\"reviewerScore\":%s,\"createdAt\":\"%s\",\"updatedAt\":\"%s\"}",
+                task.getId(),
+                task.getTaskName(),
+                task.getStatus(),
+                task.getReviewerScore() != null ? task.getReviewerScore() : "null",
+                task.getCreatedAt(),
+                task.getUpdatedAt()
+        );
+    }
+}

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.enterprise.agent</groupId>
+        <artifactId>enterprise-agent-platform</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>eap-business-chat</artifactId>
+    <name>EAP Business Chat</name>
+    <description>业务层-AI交互中心：InteractionCenterAgent + 多轮对话 + 意图识别路由 + InsightAgent</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-data-repository</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-engine-agent-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-engine-llm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-engine-rag</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-engine-agent-clue</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-engine-agent-risk</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-engine-agent-monitor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-business-screening</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+    </dependencies>
+</project>

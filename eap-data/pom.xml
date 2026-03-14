@@ -11,42 +11,12 @@
     </parent>
 
     <artifactId>eap-data</artifactId>
+    <packaging>pom</packaging>
     <name>EAP Data</name>
-    <description>数据层：数据实体（entity）+ Mapper + 数据服务 + 企业工具（tools）</description>
+    <description>数据层父模块：仓储（Repository）+ 数据接入（Ingestion）</description>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-common</artifactId>
-        </dependency>
-        <!-- MyBatis-Plus（数据层 ORM） -->
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-        </dependency>
-        <!-- PostgreSQL Driver -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-        </dependency>
-        <!-- Spring AI Core（工具层） -->
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-core</artifactId>
-        </dependency>
-        <!-- Jackson -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
+    <modules>
+        <module>eap-data-repository</module>
+        <module>eap-data-ingestion</module>
+    </modules>
 </project>

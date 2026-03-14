@@ -9,27 +9,37 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Enterprise Agent Platform</name>
-    <description>企业级 Agent 系统 - 分层架构（common / data / engine / gateway / service）</description>
+    <description>企业级 Agent 系统 - 五层架构（common / data / engine / business / app）</description>
 
     <modules>
         <!-- 公共基础层 -->
         <module>eap-common</module>
         <!-- 数据层 -->
         <module>eap-data</module>
+        <module>eap-data/eap-data-repository</module>
+        <module>eap-data/eap-data-ingestion</module>
         <!-- 引擎层 -->
         <module>eap-engine</module>
         <module>eap-engine/eap-engine-llm</module>
+        <module>eap-engine/eap-engine-rag</module>
+        <module>eap-engine/eap-engine-rule</module>
         <module>eap-engine/eap-engine-agent</module>
         <module>eap-engine/eap-engine-agent/eap-engine-agent-core</module>
-        <module>eap-engine/eap-engine-agent/eap-engine-agent-impl</module>
-        <module>eap-engine/eap-engine-data-service</module>
+        <module>eap-engine/eap-engine-agent/eap-engine-agent-clue</module>
+        <module>eap-engine/eap-engine-agent/eap-engine-agent-risk</module>
+        <module>eap-engine/eap-engine-agent/eap-engine-agent-monitor</module>
+        <!-- 业务层 -->
+        <module>eap-business</module>
+        <module>eap-business/eap-business-task</module>
+        <module>eap-business/eap-business-screening</module>
+        <module>eap-business/eap-business-report</module>
+        <module>eap-business/eap-business-chat</module>
         <!-- 网关层 -->
         <module>eap-gateway</module>
-        <!-- 微服务层 -->
-        <module>eap-service-agent</module>
-        <module>eap-service-knowledge</module>
-        <module>eap-service-insight</module>
-        <module>eap-service-chat</module>
+        <!-- 调度服务 -->
+        <module>eap-scheduler</module>
+        <!-- 主应用 -->
+        <module>eap-app</module>
     </modules>
 
     <properties>
@@ -93,20 +103,37 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- 内部模块 -->
+            <!-- 内部模块 - 公共层 -->
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
                 <artifactId>eap-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <!-- 内部模块 - 数据层 -->
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-data</artifactId>
+                <artifactId>eap-data-repository</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
+                <artifactId>eap-data-ingestion</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- 内部模块 - 引擎层 -->
+            <dependency>
+                <groupId>com.enterprise.agent</groupId>
                 <artifactId>eap-engine-llm</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.enterprise.agent</groupId>
+                <artifactId>eap-engine-rag</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.enterprise.agent</groupId>
+                <artifactId>eap-engine-rule</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -116,12 +143,38 @@
             </dependency>
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-engine-agent-impl</artifactId>
+                <artifactId>eap-engine-agent-clue</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-engine-data-service</artifactId>
+                <artifactId>eap-engine-agent-risk</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.enterprise.agent</groupId>
+                <artifactId>eap-engine-agent-monitor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- 内部模块 - 业务层 -->
+            <dependency>
+                <groupId>com.enterprise.agent</groupId>
+                <artifactId>eap-business-task</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.enterprise.agent</groupId>
+                <artifactId>eap-business-screening</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.enterprise.agent</groupId>
+                <artifactId>eap-business-report</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.enterprise.agent</groupId>
+                <artifactId>eap-business-chat</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -153,6 +206,11 @@
             <dependency>
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
                 <version>${mybatis-plus.version}</version>
             </dependency>
 

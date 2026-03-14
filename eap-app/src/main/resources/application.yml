@@ -1,0 +1,133 @@
+server:
+  port: 8081
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: eap-app
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/eap_db
+    username: ${DB_USERNAME:eap_user}
+    password: ${DB_PASSWORD:eap_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 10000ms
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 0
+
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+    consumer:
+      group-id: eap-app-consumer-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "com.enterprise.agent.*"
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:sk-placeholder}
+      chat:
+        options:
+          model: gpt-4o
+          temperature: 0.7
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:sk-ant-placeholder}
+      chat:
+        options:
+          model: claude-sonnet-4-6
+          temperature: 0.7
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      chat:
+        options:
+          model: llama3.1
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        enabled: ${NACOS_ENABLED:false}
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+eap:
+  llm:
+    provider: ${LLM_PROVIDER:openai}
+    cache-enabled: true
+    cache-ttl-seconds: 3600
+    timeout-seconds: 60
+    openai:
+      model: gpt-4o
+    claude:
+      model: claude-sonnet-4-6
+    ollama:
+      model: llama3.1
+      base-url: http://localhost:11434
+  security:
+    enabled: ${SECURITY_ENABLED:false}
+    jwt:
+      secret: ${JWT_SECRET:eap-enterprise-agent-platform-jwt-secret-key-must-be-256-bits-long!!}
+      expiration-ms: 86400000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+  show-actuator: false
+
+logging:
+  level:
+    com.enterprise.agent: DEBUG
+    org.springframework.ai: INFO
+    org.springframework.kafka: WARN
+    org.springframework.security: WARN
+  pattern:
+    console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

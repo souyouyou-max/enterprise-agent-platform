@@ -13,11 +13,12 @@
     <artifactId>eap-engine</artifactId>
     <packaging>pom</packaging>
     <name>EAP Engine</name>
-    <description>引擎层：LLM 后端 + Agent 核心/实现 + 数据服务</description>
+    <description>引擎层：LLM 后端 + Agent 核心 + RAG知识检索 + 规则引擎</description>
 
     <modules>
         <module>eap-engine-llm</module>
         <module>eap-engine-agent</module>
-        <module>eap-engine-data-service</module>
+        <module>eap-engine-rag</module>
+        <module>eap-engine-rule</module>
     </modules>
 </project>
