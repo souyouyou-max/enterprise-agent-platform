@@ -126,7 +126,7 @@ public class ProcurementAuditAgent extends BaseAgent {
             case "split" -> String.format(
                     "请对机构【%s】执行化整为零识别分析（30天时间窗口，50万元门槛），输出疑似拆分采购清单。", orgCode);
             case "collusive" -> String.format(
-                    "请对项目 BID-PROJECT-001 执行围标串标识别分析（相似度阈值0.85），输出疑似围标供应商组合。");
+                    "请对机构【%s】的项目 BID-PROJECT-001 执行围标串标识别分析（相似度阈值0.85），输出疑似围标供应商组合。", orgCode);
             case "conflict" -> String.format(
                     "请对机构【%s】执行全量利益输送风险排查，比对所有中标供应商关联人员与内部员工，输出风险清单。", orgCode);
             default -> String.format(
