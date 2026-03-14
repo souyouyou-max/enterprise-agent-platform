@@ -16,24 +16,10 @@
         <module>eap-common</module>
         <!-- 数据层 -->
         <module>eap-data</module>
-        <module>eap-data/eap-data-repository</module>
-        <module>eap-data/eap-data-ingestion</module>
         <!-- 引擎层 -->
         <module>eap-engine</module>
-        <module>eap-engine/eap-engine-llm</module>
-        <module>eap-engine/eap-engine-rag</module>
-        <module>eap-engine/eap-engine-rule</module>
-        <module>eap-engine/eap-engine-agent</module>
-        <module>eap-engine/eap-engine-agent/eap-engine-agent-core</module>
-        <module>eap-engine/eap-engine-agent/eap-engine-agent-clue</module>
-        <module>eap-engine/eap-engine-agent/eap-engine-agent-risk</module>
-        <module>eap-engine/eap-engine-agent/eap-engine-agent-monitor</module>
         <!-- 业务层 -->
         <module>eap-business</module>
-        <module>eap-business/eap-business-task</module>
-        <module>eap-business/eap-business-screening</module>
-        <module>eap-business/eap-business-report</module>
-        <module>eap-business/eap-business-chat</module>
         <!-- 网关层 -->
         <module>eap-gateway</module>
         <!-- 调度服务 -->
