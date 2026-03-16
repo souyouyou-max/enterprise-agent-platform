@@ -92,6 +92,12 @@ eap:
     ollama:
       model: llama3.1
       base-url: http://localhost:11434
+  minio:
+    enabled: false
+    endpoint: http://localhost:9000
+    access-key: minioadmin
+    secret-key: minioadmin
+    bucket-name: bid-documents
   security:
     enabled: ${SECURITY_ENABLED:false}
     jwt:

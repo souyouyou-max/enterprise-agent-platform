@@ -145,8 +145,33 @@ public class ZhaocaiSystemAdapter implements DataSourceAdapter {
         b1.setShareholders("[{\"name\":\"王磊\",\"ratio\":51},{\"name\":\"赵军\",\"ratio\":49}]");
         b1.setIsWinner(true);
         b1.setBidDate(now.minusDays(55));
+        b1.setBidDocumentUrl("http://mock-zhaocai.internal/files/SUP001-erp-bid.pdf");
+        b1.setBidDocumentText(
+                "北京科技发展有限公司 企业ERP系统升级改造项目 投标文件\n\n" +
+                "一、技术方案\n" +
+                "本公司拟采用SAP ERP系统作为核心平台，对现有系统进行全面升级改造。" +
+                "技术架构采用微服务架构，基于Spring Boot 3.x框架开发，支持高并发、高可用部署。" +
+                "数据迁移方案：采用ETL工具将历史数据从旧系统迁移至新系统，保证数据完整性及一致性。" +
+                "实施周期分为三个阶段：需求调研（1个月）、系统开发（3个月）、测试上线（2个月）。\n\n" +
+                "二、价格明细\n" +
+                "软件开发费用：280,000元\n" +
+                "系统集成费用：120,000元\n" +
+                "数据迁移费用：80,000元\n" +
+                "3年运维服务费：200,000元\n" +
+                "合计：680,000元\n\n" +
+                "三、项目团队\n" +
+                "项目经理：张明，拥有10年ERP实施经验，PMP认证。\n" +
+                "技术负责人：李华，精通SAP及Java开发，高级工程师。\n" +
+                "运维工程师：王强，具备5年企业级系统运维经验。\n\n" +
+                "四、售后保障\n" +
+                "提供7×24小时技术支持，响应时间不超过2小时。" +
+                "系统上线后保修期12个月，提供免费升级及补丁服务。" +
+                "设立专属客服热线，确保用户问题得到及时解决。\n\n" +
+                "五、资质证明\n" +
+                "软件企业认定证书、ISO9001质量管理体系认证、高新技术企业证书。"
+        );
 
-        // B2：SUP006 陪标（同一法定代表人"王磊"，围标！）
+        // B2：SUP006 陪标（同一法定代表人"王磊"，围标！文本与B1高度相似）
         ProcurementBid b2 = new ProcurementBid();
         b2.setBidProjectId("BID-2024-001");
         b2.setProjectName("企业ERP系统升级改造项目");
@@ -158,6 +183,31 @@ public class ZhaocaiSystemAdapter implements DataSourceAdapter {
         b2.setShareholders("[{\"name\":\"王磊\",\"ratio\":70},{\"name\":\"刘强\",\"ratio\":30}]");
         b2.setIsWinner(false);
         b2.setBidDate(now.minusDays(55));
+        b2.setBidDocumentUrl("http://mock-zhaocai.internal/files/SUP006-erp-bid.pdf");
+        b2.setBidDocumentText(
+                "天津贸易科技有限公司 企业ERP系统升级改造项目 投标文件\n\n" +
+                "一、技术方案\n" +
+                "本公司拟采用SAP ERP系统作为核心平台，对现有系统进行全面升级改造。" +
+                "技术架构采用微服务架构，基于Spring Boot 3.x框架开发，支持高并发、高可用部署。" +
+                "数据迁移方案：采用ETL工具将历史数据从旧系统迁移至新系统，保证数据完整性及一致性。" +
+                "实施周期分为三个阶段：需求调研（1个月）、系统开发（3个月）、测试上线（2个月）。\n\n" +
+                "二、价格明细\n" +
+                "软件开发费用：308,000元\n" +
+                "系统集成费用：132,000元\n" +
+                "数据迁移费用：88,000元\n" +
+                "3年运维服务费：222,000元\n" +
+                "合计：750,000元\n\n" +
+                "三、项目团队\n" +
+                "项目经理：张明，拥有10年ERP实施经验，PMP认证。\n" +
+                "技术负责人：李华，精通SAP及Java开发，高级工程师。\n" +
+                "运维工程师：王强，具备5年企业级系统运维经验。\n\n" +
+                "四、售后保障\n" +
+                "提供7×24小时技术支持，响应时间不超过2小时。" +
+                "系统上线后保修期12个月，提供免费升级及补丁服务。" +
+                "设立专属客服热线，确保用户问题得到及时解决。\n\n" +
+                "五、资质证明\n" +
+                "软件企业认定证书、ISO9001质量管理体系认证、高新技术企业证书。"
+        );
 
         // B3：BID-2024-002 独立正常投标记录
         ProcurementBid b3 = new ProcurementBid();
@@ -171,6 +221,7 @@ public class ZhaocaiSystemAdapter implements DataSourceAdapter {
         b3.setShareholders("[{\"name\":\"陈波\",\"ratio\":60},{\"name\":\"林静\",\"ratio\":40}]");
         b3.setIsWinner(true);
         b3.setBidDate(now.minusDays(65));
+        b3.setBidDocumentUrl("http://mock-zhaocai.internal/files/SUP002-security-bid.docx");
 
         return Arrays.asList(b1, b2, b3);
     }

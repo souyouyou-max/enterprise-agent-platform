@@ -59,4 +59,20 @@ public class ProcurementBid {
 
     @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
+
+    /** 招采系统文件下载URL */
+    @TableField("bid_document_url")
+    private String bidDocumentUrl;
+
+    /** MinIO存储路径 */
+    @TableField("bid_document_minio_pth")
+    private String bidDocumentMinioPth;
+
+    /** 解析后纯文本 */
+    @TableField("bid_document_text")
+    private String bidDocumentText;
+
+    /** 报价明细JSON */
+    @TableField("bid_price_detail")
+    private String bidPriceDetail;
 }

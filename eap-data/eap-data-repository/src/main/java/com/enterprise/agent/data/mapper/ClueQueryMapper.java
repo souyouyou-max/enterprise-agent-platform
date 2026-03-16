@@ -79,6 +79,15 @@ public interface ClueQueryMapper {
     List<Map<String, Object>> findCollusiveBids(@Param("orgCode") String orgCode);
 
     /**
+     * 围标串标规则（CollusiveBidRule）- 获取机构下所有有投标记录的项目ID
+     */
+    @Select("SELECT DISTINCT pb.bid_project_id " +
+            "FROM procurement_bid pb " +
+            "JOIN procurement_project pp ON pb.bid_project_id = pp.project_code " +
+            "WHERE pp.org_code = #{orgCode}")
+    List<String> findProjectIdsByOrgCode(@Param("orgCode") String orgCode);
+
+    /**
      * 利益冲突规则（ConflictOfInterestRule）- 法定代表人与内部员工同名
      * 查找中标供应商法定代表人与内部员工同名的情况。
      */
