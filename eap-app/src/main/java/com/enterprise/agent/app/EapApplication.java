@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAsync
 @EnableFeignClients
 @ComponentScan(basePackages = "com.enterprise.agent")
-@MapperScan("com.enterprise.agent.data.mapper")
+@MapperScan({"com.enterprise.agent.data.mapper", "com.enterprise.agent.dataservice.knowledge.repository"})
 public class EapApplication {
     public static void main(String[] args) {
         SpringApplication.run(EapApplication.class, args);
