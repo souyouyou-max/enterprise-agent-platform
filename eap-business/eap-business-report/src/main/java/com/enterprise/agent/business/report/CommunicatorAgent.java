@@ -128,7 +128,7 @@ public class CommunicatorAgent extends BaseAgent {
         return String.format("""
                 ---
                 **报告元数据**
-                - 任务ID: %d
+                - 任务ID: %s
                 - 任务名称: %s
                 - 生成时间: %s
                 - 报告风格: %s

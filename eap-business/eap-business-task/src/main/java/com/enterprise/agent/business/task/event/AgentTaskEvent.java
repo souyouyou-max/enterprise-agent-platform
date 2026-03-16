@@ -17,7 +17,7 @@ public class AgentTaskEvent {
     public static final String TOPIC = "agent-task-events";
 
     /** 任务 ID */
-    private Long taskId;
+    private String taskId;
 
     /** 任务名称 */
     private String taskName;

@@ -9,9 +9,10 @@ import com.enterprise.agent.core.context.AgentResult;
 import com.enterprise.agent.core.orchestrator.AgentOrchestrator;
 import com.enterprise.agent.business.chat.InsightAgent;
 import com.enterprise.agent.dataservice.insight.model.InsightResult;
-import com.enterprise.agent.knowledge.service.KnowledgeQaService;
+import com.enterprise.agent.dataservice.knowledge.service.KnowledgeQaService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
