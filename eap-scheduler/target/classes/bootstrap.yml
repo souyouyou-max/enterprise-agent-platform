@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: eap-scheduler
+  cloud:
+    nacos:
+      config:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+        file-extension: yml
+        namespace: ${NACOS_NAMESPACE:}
+        # 公共配置（所有服务共享）
+        shared-configs:
+          - data-id: common.yml
+            group: DEFAULT_GROUP
+            refresh: true
+        # 服务专属配置
+        extension-configs:
+          - data-id: eap-scheduler.yml
+            group: DEFAULT_GROUP
+            refresh: true

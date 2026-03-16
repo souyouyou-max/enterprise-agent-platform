@@ -40,7 +40,7 @@
         <spring-cloud-alibaba.version>2023.0.1.0</spring-cloud-alibaba.version>
         <!-- Data -->
         <mybatis-plus.version>3.5.9</mybatis-plus.version>
-        <postgresql.version>42.7.4</postgresql.version>
+        <oceanbase.version>2.4.12</oceanbase.version>
         <!-- Security -->
         <jjwt.version>0.12.6</jjwt.version>
         <!-- Docs -->
@@ -186,6 +186,20 @@
             <dependency>
                 <groupId>com.alibaba.cloud</groupId>
                 <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+            </dependency>
+
+            <!-- Nacos Config -->
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+                <version>${spring-cloud-alibaba.version}</version>
+            </dependency>
+
+            <!-- Bootstrap Context（Spring Boot 3.x 需要显式引入） -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-bootstrap</artifactId>
+                <version>4.1.4</version>
             </dependency>
 
             <!-- MyBatis-Plus -->
