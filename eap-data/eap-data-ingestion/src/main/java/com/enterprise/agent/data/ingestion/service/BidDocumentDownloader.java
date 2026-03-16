@@ -35,8 +35,8 @@ public class BidDocumentDownloader {
 
     public BidDocumentDownloader(RestTemplateBuilder builder) {
         this.restTemplate = builder
-                .connectTimeout(Duration.ofSeconds(30))
-                .readTimeout(Duration.ofSeconds(30))
+                .setConnectTimeout(Duration.ofSeconds(30))
+                .setReadTimeout(Duration.ofSeconds(30))
                 .build();
     }
 
