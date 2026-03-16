@@ -4,6 +4,7 @@ import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hwpf.HWPFDocument;
@@ -76,7 +77,7 @@ public class BidDocumentParser {
     // ---- 各格式解析 ----
 
     private String parsePdf(byte[] data) throws Exception {
-        try (PDDocument doc = PDDocument.load(new ByteArrayInputStream(data))) {
+        try (PDDocument doc = Loader.loadPDF(data)) {
             PDFTextStripper stripper = new PDFTextStripper();
             return stripper.getText(doc);
         }
