@@ -81,7 +81,7 @@ mybatis-plus:
 
 eap:
   llm:
-    provider: ${LLM_PROVIDER:openai}
+    provider: ${LLM_PROVIDER:claude}
     cache-enabled: true
     cache-ttl-seconds: 3600
     timeout-seconds: 60
