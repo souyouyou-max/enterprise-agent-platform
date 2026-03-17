@@ -14,7 +14,7 @@ spring:
 # 调度任务专属配置
 eap:
   audit:
-    org-codes: ${AUDIT_ORG_CODES:ORG001}
+    apply-codes: ${AUDIT_APPLY_CODES:10001}
     interval-seconds: ${AUDIT_INTERVAL_SECONDS:3600}
     initial-delay-seconds: ${AUDIT_INITIAL_DELAY_SECONDS:30}
 
@@ -27,5 +27,7 @@ management:
 logging:
   level:
     com.enterprise.agent: INFO
+    com.alibaba.nacos: INFO
+    com.alibaba.cloud.nacos: INFO
   pattern:
     console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

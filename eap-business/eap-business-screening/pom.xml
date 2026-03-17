@@ -12,7 +12,7 @@
 
     <artifactId>eap-business-screening</artifactId>
     <name>EAP Business Screening</name>
-    <description>业务层-疑点筛查：ProcurementAuditAgent + AuditEngineService + 招采稽核 API</description>
+    <description>业务层-疑点筛查：AuditEngineService</description>
 
     <dependencies>
         <dependency>

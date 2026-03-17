@@ -4,6 +4,14 @@ server:
 spring:
   main:
     web-application-type: reactive
+
+  # Redis（限流令牌桶存储）
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
   cloud:
     gateway:
       routes:
@@ -11,36 +19,125 @@ spring:
           uri: lb://eap-app
           predicates:
             - Path=/api/v1/tasks/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: eap-app-cb
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
+                key-resolver: "#{@ipKeyResolver}"
+
         - id: knowledge-api
           uri: lb://eap-app
           predicates:
             - Path=/api/v1/knowledge/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: eap-app-cb
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@ipKeyResolver}"
+
         - id: insight-api
           uri: lb://eap-app
           predicates:
             - Path=/api/v1/insight/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: eap-app-cb
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@ipKeyResolver}"
+
         - id: chat-api
           uri: lb://eap-app
           predicates:
             - Path=/api/v1/chat/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: eap-app-cb
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 30
+                redis-rate-limiter.burstCapacity: 60
+                key-resolver: "#{@ipKeyResolver}"
+
         - id: procurement-audit-api
           uri: lb://eap-app
           predicates:
             - Path=/api/v1/procurement-audit/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: eap-app-cb
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@ipKeyResolver}"
+
         - id: risk-management-api
           uri: lb://eap-app
           predicates:
             - Path=/api/v1/risk-management/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: eap-app-cb
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@ipKeyResolver}"
+
         - id: audit-engine-api
           uri: lb://eap-app
           predicates:
             - Path=/api/v1/audit-engine/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: eap-app-cb
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@ipKeyResolver}"
+
         - id: enterprise-api
           uri: lb://eap-app
           predicates:
             - Path=/api/v1/enterprise/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: eap-app-cb
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@ipKeyResolver}"
+
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
     nacos:
       discovery:
         server-addr: ${NACOS_ADDR:localhost:8848}
@@ -49,11 +146,34 @@ spring:
         password: ${NACOS_PASSWORD:nacos}
         fail-fast: true
 
+# Resilience4j 熔断器配置
+resilience4j:
+  circuitbreaker:
+    instances:
+      eap-app-cb:
+        # 滑动窗口：最近 10 次请求中失败率超过 50% 触发熔断
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        # 熔断后等待 10 秒再尝试半开
+        waitDurationInOpenState: 10s
+        # 半开状态允许 3 次请求探测
+        permittedNumberOfCallsInHalfOpenState: 3
+        # 慢调用阈值：超过 5 秒视为慢调用
+        slowCallDurationThreshold: 5s
+        slowCallRateThreshold: 80
+        # 至少 5 次请求才开始统计
+        minimumNumberOfCalls: 5
+  timelimiter:
+    instances:
+      eap-app-cb:
+        # 超过 10 秒强制超时
+        timeoutDuration: 10s
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,circuitbreakers
   endpoint:
     health:
       show-details: always
@@ -62,5 +182,6 @@ logging:
   level:
     com.enterprise.agent: DEBUG
     org.springframework.cloud.gateway: INFO
+    io.github.resilience4j: INFO
   pattern:
     console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

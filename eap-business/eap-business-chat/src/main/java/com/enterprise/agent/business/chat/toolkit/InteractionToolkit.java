@@ -7,7 +7,6 @@ import com.enterprise.agent.data.service.AgentTaskDataService;
 import com.enterprise.agent.engine.agent.clue.ClueDiscoveryAgent;
 import com.enterprise.agent.business.chat.InsightAgent;
 import com.enterprise.agent.engine.agent.monitor.MonitoringAgent;
-import com.enterprise.agent.business.screening.ProcurementAuditAgent;
 import com.enterprise.agent.engine.agent.risk.RiskAnalysisAgent;
 import com.enterprise.agent.dataservice.insight.model.InsightResult;
 import com.enterprise.agent.dataservice.knowledge.service.KnowledgeQaService;
@@ -34,7 +33,6 @@ public class InteractionToolkit {
     private final KnowledgeQaService knowledgeQaService;
     private final InsightAgent insightAgent;
     private final AgentTaskDataService agentTaskDataService;
-    private final ProcurementAuditAgent procurementAuditAgent;
     private final ClueDiscoveryAgent clueDiscoveryAgent;
     private final RiskAnalysisAgent riskAnalysisAgent;
     private final MonitoringAgent monitoringAgent;
@@ -82,20 +80,6 @@ public class InteractionToolkit {
             sb.append("\n\n> 执行SQL：`").append(result.getGeneratedSql()).append("`");
         }
         return sb.toString();
-    }
-
-    /**
-     * 执行招采稽核分析
-     */
-    @Tool(description = "执行招采稽核分析，识别大额未招标、化整为零、围标串标、利益输送等违规行为。" +
-            "orgCode为机构编码，如未提供则使用默认机构。")
-    public String runProcurementAudit(String orgCode) {
-        log.info("[InteractionToolkit] runProcurementAudit, orgCode={}", orgCode);
-        AgentResult result = procurementAuditAgent.auditAll(orgCode);
-        if (result.isSuccess()) {
-            return result.getOutput();
-        }
-        return "招采稽核执行未完成，部分结果：" + result.getOutput();
     }
 
     /**

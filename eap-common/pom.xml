@@ -52,5 +52,13 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+
+        <!-- MinIO（可选：仅在启用 eap.minio.enabled=true 时使用） -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.5.11</version>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
 </project>

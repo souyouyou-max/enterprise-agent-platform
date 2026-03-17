@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
 @EnableAsync
-@EnableFeignClients
+@EnableFeignClients(basePackages = "com.enterprise.agent")
 @ComponentScan(basePackages = "com.enterprise.agent")
 @MapperScan({"com.enterprise.agent.data.mapper", "com.enterprise.agent.dataservice.knowledge.repository"})
 public class EapApplication {

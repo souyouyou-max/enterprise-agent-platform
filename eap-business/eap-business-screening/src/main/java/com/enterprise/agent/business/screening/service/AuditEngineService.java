@@ -65,24 +65,24 @@ public class AuditEngineService {
      *   <li>批量持久化到 clue_result 表</li>
      * </ol>
      *
-     * @param orgCode 机构编码
+     * @param applyCode 机构编码
      * @return 本次检测命中的疑点线索列表
      */
     @Transactional
-    public List<ClueResult> runAllRules(String orgCode) {
-        log.info("[审计引擎] 开始对机构[{}]执行规则检测，共{}条规则", orgCode, rules.size());
+    public List<ClueResult> runAllRules(String applyCode) {
+        log.info("[审计引擎] 开始对机构[{}]执行规则检测，共{}条规则", applyCode, rules.size());
 
         // 清除旧的 PENDING 记录（已确认/已排除的保留）
-        int deleted = clueResultMapper.deletePendingByOrgCode(orgCode);
+        int deleted = clueResultMapper.deletePendingByApplyCode(applyCode);
         if (deleted > 0) {
-            log.info("[审计引擎] 已清除机构[{}]旧PENDING记录{}条", orgCode, deleted);
+            log.info("[审计引擎] 已清除机构[{}]旧PENDING记录{}条", applyCode, deleted);
         }
 
         List<ClueResult> allClues = new ArrayList<>();
 
         for (AuditRule rule : rules) {
             try {
-                List<ClueResult> clues = rule.execute(orgCode);
+                List<ClueResult> clues = rule.execute(applyCode);
                 allClues.addAll(clues);
             } catch (Exception e) {
                 log.error("[审计引擎] 规则[{}]执行异常：{}", rule.getRuleName(), e.getMessage(), e);
@@ -94,26 +94,26 @@ public class AuditEngineService {
             clueResultMapper.insert(clue);
         }
 
-        log.info("[审计引擎] 机构[{}]规则检测完成，共发现{}条疑点线索", orgCode, allClues.size());
+        log.info("[审计引擎] 申请[{}]规则检测完成，共发现{}条疑点线索", applyCode, allClues.size());
         return allClues;
     }
 
     /**
      * 完整审计流程：先同步数据，再执行规则
      *
-     * @param orgCode 机构编码
+     * @param applyCode 申请编码
      * @return 本次检测命中的疑点线索列表
      */
-    public List<ClueResult> fullAudit(String orgCode) {
-        log.info("[审计引擎] 启动机构[{}]完整审计流程（同步+检测）", orgCode);
-        syncAllDataSources();
-        return runAllRules(orgCode);
+    public List<ClueResult> fullAudit(String applyCode) {
+        log.info("[审计引擎] 启动申请[{}]完整审计流程（同步+检测）", applyCode);
+//        syncAllDataSources();
+        return runAllRules(applyCode);
     }
 
     /**
-     * 查询机构待处理疑点线索
+     * 查询申请待处理疑点线索
      *
-     * @param orgCode 机构编码
+     * @param orgCode 申请编码
      * @return PENDING 状态的疑点列表
      */
     public List<ClueResult> getPendingClues(String orgCode) {
@@ -121,9 +121,9 @@ public class AuditEngineService {
     }
 
     /**
-     * 查询机构全部疑点线索（含已处理）
+     * 查询申请全部疑点线索（含已处理）
      *
-     * @param orgCode 机构编码
+     * @param orgCode 申请编码
      * @return 全部疑点列表
      */
     public List<ClueResult> getAllClues(String orgCode) {

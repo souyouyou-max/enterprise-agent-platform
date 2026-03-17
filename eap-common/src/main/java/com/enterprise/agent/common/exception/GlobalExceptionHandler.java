@@ -5,6 +5,7 @@ import com.enterprise.agent.common.core.exception.LlmException;
 import com.enterprise.agent.common.core.exception.ToolExecutionException;
 import com.enterprise.agent.common.core.response.ResponseResult;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -20,6 +22,12 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /**
+     * 是否在响应中返回 detail（便于联调排错，生产建议关闭）
+     */
+    @Value("${eap.error.include-detail:false}")
+    private boolean includeDetail;
 
     @ExceptionHandler(AgentException.class)
     public ResponseResult<Void> handleAgentException(AgentException e) {
@@ -52,7 +60,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseResult<Void> handleGenericException(Exception e) {
-        log.error("[ExceptionHandler] 未处理异常: {}", e.getMessage(), e);
-        return ResponseResult.error(500, "服务器内部错误");
+        String errorId = UUID.randomUUID().toString();
+        log.error("[ExceptionHandler][errorId={}] 未处理异常: {}", errorId, e.getMessage(), e);
+        String detail = includeDetail ? (e.getClass().getName() + ": " + e.getMessage()) : null;
+        return ResponseResult.error(500, "服务器内部错误", errorId, detail);
     }
 }

@@ -15,12 +15,12 @@ import java.util.List;
 @Mapper
 public interface ClueResultMapper extends BaseMapper<ClueResult> {
 
-    @Select("SELECT * FROM clue_result WHERE org_code = #{orgCode} ORDER BY created_at DESC")
-    List<ClueResult> findByOrgCode(@Param("orgCode") String orgCode);
+    @Select("SELECT * FROM clue_result WHERE apply_code = #{applyCode} ORDER BY created_at DESC")
+    List<ClueResult> findByOrgCode(@Param("applyCode") String applyCode);
 
-    @Select("SELECT * FROM clue_result WHERE org_code = #{orgCode} AND status = 'PENDING' ORDER BY created_at DESC")
-    List<ClueResult> findPendingByOrgCode(@Param("orgCode") String orgCode);
+    @Select("SELECT * FROM clue_result WHERE apply_code = #{applyCode} AND status = 'PENDING' ORDER BY created_at DESC")
+    List<ClueResult> findPendingByOrgCode(@Param("applyCode") String applyCode);
 
-    @Delete("DELETE FROM clue_result WHERE org_code = #{orgCode} AND status = 'PENDING'")
-    int deletePendingByOrgCode(@Param("orgCode") String orgCode);
+    @Delete("DELETE FROM clue_result WHERE apply_code = #{applyCode} AND status = 'PENDING'")
+    int deletePendingByApplyCode(@Param("applyCode") String applyCode);
 }

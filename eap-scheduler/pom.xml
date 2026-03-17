@@ -12,39 +12,32 @@
 
     <artifactId>eap-scheduler</artifactId>
     <name>EAP Scheduler</name>
-    <description>定时调度服务：审计引擎定时驱动（数据同步 + 规则检测）</description>
+    <description>定时调度服务：通过 Feign 调用 eap-app 触发审计引擎，不再直连数据库</description>
 
     <dependencies>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-business-screening</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-engine-rule</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-data-ingestion</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+
+        <!-- Feign（调用 eap-app） -->
         <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.oceanbase</groupId>
-            <artifactId>oceanbase-client</artifactId>
-            <version>${oceanbase.version}</version>
-            <scope>runtime</scope>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
+
         <!-- Nacos -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>

@@ -5,7 +5,6 @@ import com.enterprise.agent.core.context.AgentResult;
 import com.enterprise.agent.engine.agent.clue.ClueDiscoveryAgent;
 import com.enterprise.agent.engine.agent.monitor.MonitoringAgent;
 import com.enterprise.agent.engine.agent.risk.RiskAnalysisAgent;
-import com.enterprise.agent.business.screening.ProcurementAuditAgent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
@@ -27,7 +26,6 @@ public class AgentOrchestrationToolkit {
     private final ClueDiscoveryAgent clueDiscoveryAgent;
     private final RiskAnalysisAgent riskAnalysisAgent;
     private final MonitoringAgent monitoringAgent;
-    private final ProcurementAuditAgent procurementAuditAgent;
 
     /**
      * 线索发现：扫描指定机构的采购、财务、合同等数据，发现异常疑点线索。
@@ -71,13 +69,5 @@ public class AgentOrchestrationToolkit {
         return result.isSuccess() ? result.getOutput() : "监测检查失败：" + result.getErrorMessage();
     }
 
-    /**
-     * 招采稽核：对指定机构执行全量招采稽核，检测未招标、化整为零、围标串标、利益输送四类违规。
-     */
-    @Tool(description = "招采稽核：对指定机构执行全量招采稽核，检测未招标、化整为零、围标串标、利益输送四类违规。输入机构编码orgCode。")
-    public String auditProcurement(String orgCode) {
-        log.info("[AgentOrchestrationToolkit] auditProcurement, orgCode={}", orgCode);
-        AgentResult result = procurementAuditAgent.auditAll(orgCode);
-        return result.isSuccess() ? result.getOutput() : "招采稽核失败：" + result.getErrorMessage();
-    }
+    // 招采稽核能力已移除（相关表不存在）
 }

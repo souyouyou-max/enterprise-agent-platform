@@ -32,7 +32,6 @@ import java.util.List;
  * - discoverClues(orgCode)   → ClueDiscoveryAgent
  * - analyzeRisk(orgCode)     → RiskAnalysisAgent
  * - checkMonitoring(orgCode) → MonitoringAgent
- * - auditProcurement(orgCode)→ ProcurementAuditAgent
  */
 @Slf4j
 @Service
@@ -45,7 +44,6 @@ public class InteractionCenterAgent extends BaseAgent {
             1. discoverClues(orgCode) - 线索发现：扫描机构异常疑点
             2. analyzeRisk(orgCode) - 风险透视：多维风险评分和报告
             3. checkMonitoring(orgCode) - 监测预警：查看当前预警状态
-            4. auditProcurement(orgCode) - 招采稽核：检测采购违规行为
 
             工作原则：
             - 根据用户需求，自主决定调用哪些工具、调用顺序

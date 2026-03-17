@@ -14,12 +14,16 @@ import java.time.LocalDateTime;
 @TableName("clue_result")
 public class ClueResult {
 
-    @TableId(value = "id", type = IdType.AUTO)
+    /**
+     * OceanBase（Oracle兼容）下 AUTO + 返回主键可能触发 JDBC RETURNING 参数位异常。
+     * 使用 MP 雪花算法生成ID，避免依赖数据库返回自增主键。
+     */
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     /** 机构编码 */
-    @TableField("org_code")
-    private String orgCode;
+    @TableField("apply_code")
+    private String applyCode;
 
     /** 线索类型：UNTENDERED / SPLIT_PURCHASE / COLLUSIVE_BID / CONFLICT_OF_INTEREST */
     @TableField("clue_type")
