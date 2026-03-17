@@ -27,24 +27,29 @@ class CompareRequest(BaseModel):
 
 @app.post("/analyze/compare-texts")
 def analyze_compare_texts(req: CompareRequest):
+    logger.info("compare-texts start count=%d", len(req.texts))
     comparisons = []
     n = len(req.texts)
     for i in range(n):
         for j in range(i + 1, n):
-            comparisons.append(
-                {
-                    "i": i,
-                    "j": j,
-                    "result": compare_texts_dual(req.texts[i], req.texts[j]),
-                }
+            res = compare_texts_dual(req.texts[i], req.texts[j])
+            logger.info(
+                "compare-texts pair i=%d j=%d lenA=%s lenB=%s tfidf=%s ratio=%s",
+                i, j,
+                res.get("lenA"), res.get("lenB"),
+                f"{res.get('tfidfCosine'):.4f}" if res.get("ok") else "n/a",
+                f"{res.get('difflibRatio'):.4f}" if res.get("ok") else "n/a",
             )
+            comparisons.append({"i": i, "j": j, "result": res})
 
     price_result = analyze_price_patterns(req.prices) if req.prices else None
+    logger.info("compare-texts done comparisons=%d", len(comparisons))
     return {"comparisons": comparisons, "pricePatterns": price_result}
 
 
 @app.post("/analyze/compare-files")
 async def analyze_compare_files(files: list[UploadFile] = File(...)):
+    logger.info("compare-files start count=%d names=%s", len(files), [f.filename for f in files])
     texts: list[str] = []
     filenames: list[str] = []
     for f in files:
@@ -55,13 +60,15 @@ async def analyze_compare_files(files: list[UploadFile] = File(...)):
     n = len(texts)
     for i in range(n):
         for j in range(i + 1, n):
-            comparisons.append(
-                {
-                    "a": filenames[i],
-                    "b": filenames[j],
-                    "result": compare_texts_dual(texts[i], texts[j]),
-                }
+            res = compare_texts_dual(texts[i], texts[j])
+            logger.info(
+                "compare-files pair a=%s b=%s tfidf=%s ratio=%s",
+                filenames[i], filenames[j],
+                f"{res.get('tfidfCosine'):.4f}" if res.get("ok") else "n/a",
+                f"{res.get('difflibRatio'):.4f}" if res.get("ok") else "n/a",
             )
+            comparisons.append({"a": filenames[i], "b": filenames[j], "result": res})
+    logger.info("compare-files done comparisons=%d", len(comparisons))
     return {"files": filenames, "comparisons": comparisons}
 
 
@@ -70,12 +77,20 @@ async def analyze_compare_two_files(a: UploadFile = File(...), b: UploadFile = F
     """
     Compare exactly two files and return a single similarity result.
     """
+    logger.info("compare-two-files start a=%s b=%s", a.filename, b.filename)
     text_a = await parse_upload_to_text(a)
     text_b = await parse_upload_to_text(b)
+    res = compare_texts_dual(text_a, text_b)
+    logger.info(
+        "compare-two-files done a=%s b=%s tfidf=%s ratio=%s",
+        a.filename, b.filename,
+        f"{res.get('tfidfCosine'):.4f}" if res.get("ok") else "n/a",
+        f"{res.get('difflibRatio'):.4f}" if res.get("ok") else "n/a",
+    )
     return {
         "a": a.filename or "a",
         "b": b.filename or "b",
-        "result": compare_texts_dual(text_a, text_b),
+        "result": res,
     }
 
 
