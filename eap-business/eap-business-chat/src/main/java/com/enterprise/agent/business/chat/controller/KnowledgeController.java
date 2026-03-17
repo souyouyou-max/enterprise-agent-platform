@@ -1,4 +1,4 @@
-package com.enterprise.agent.app.controller;
+package com.enterprise.agent.business.chat.controller;
 
 import com.enterprise.agent.common.core.response.ResponseResult;
 import com.enterprise.agent.dataservice.knowledge.entity.KnowledgeDocument;

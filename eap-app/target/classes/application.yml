@@ -39,6 +39,13 @@ springdoc:
     operations-sorter: method
   show-actuator: false
 
+feign:
+  client:
+    config:
+      bid-analysis-service:
+        connect-timeout: 5000
+        read-timeout: 120000
+
 logging:
   level:
     com.enterprise.agent: DEBUG

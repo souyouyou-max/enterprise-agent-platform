@@ -12,10 +12,10 @@
 
     <artifactId>eap-app</artifactId>
     <name>EAP Application</name>
-    <description>主应用：整合所有业务模块（任务/筛查/报告/对话/知识/洞察），统一对外提供 REST API</description>
+    <description>主应用：装配层，负责启动、全局配置和安全，不含业务逻辑</description>
 
     <dependencies>
-        <!-- 业务层全部模块 -->
+        <!-- ── 业务层（传递引入引擎层/数据层） ── -->
         <dependency>
             <groupId>com.enterprise.agent</groupId>
             <artifactId>eap-business-task</artifactId>
@@ -33,47 +33,7 @@
             <artifactId>eap-business-chat</artifactId>
         </dependency>
 
-        <!-- 引擎层 -->
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-engine-llm</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-engine-rag</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-engine-rule</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-engine-agent-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-engine-agent-clue</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-engine-agent-risk</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-engine-agent-monitor</artifactId>
-        </dependency>
-
-        <!-- 数据层 -->
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-data-repository</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-data-ingestion</artifactId>
-        </dependency>
-
-        <!-- Spring Boot -->
+        <!-- ── Spring Boot Web/Security/Actuator ── -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -95,7 +55,7 @@
             <artifactId>spring-kafka</artifactId>
         </dependency>
 
-        <!-- DB -->
+        <!-- ── 数据库 Driver（runtime，不传递） ── -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
@@ -107,7 +67,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Nacos -->
+        <!-- ── Nacos + Bootstrap ── -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
@@ -121,15 +81,13 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-bootstrap</artifactId>
         </dependency>
-        <!-- Spring Cloud OpenFeign -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
             <version>4.1.3</version>
         </dependency>
 
-
-        <!-- JWT -->
+        <!-- ── JWT（SecurityConfig / JwtUtil 直接使用） ── -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -145,7 +103,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Swagger -->
+        <!-- ── Swagger（全局 OpenAPI 配置） ── -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>

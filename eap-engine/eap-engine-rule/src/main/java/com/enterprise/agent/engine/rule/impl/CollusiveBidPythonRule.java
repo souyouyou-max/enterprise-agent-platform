@@ -47,6 +47,14 @@ public class CollusiveBidPythonRule implements AuditRule {
     @Value("${eap.audit.collusive.python.min-same-places:10}")
     private int minSamePlaces;
 
+    /** 余弦相似度触发阈值（当提取文字较短时仍可告警） */
+    @Value("${eap.audit.collusive.python.cosine-threshold:0.95}")
+    private double cosineThreshold;
+
+    /** 触发余弦判断所需最小文本长度（避免空文档误报） */
+    @Value("${eap.audit.collusive.python.min-text-len-for-cosine:30}")
+    private int minTextLenForCosine;
+
     private final BidAnalysisClient bidAnalysisClient;
     private final MinioDocumentTextExtractor minio;
 
@@ -85,8 +93,24 @@ public class CollusiveBidPythonRule implements AuditRule {
         req.setFiles(files);
 
         BidAnalysisCompareBase64Response resp = bidAnalysisClient.compareBase64(req);
-        log.info("[CollusiveBidPythonRule] Python对比服务响应：{}", resp);
         if (resp == null || resp.getComparisons() == null) return List.of();
+        if (resp.getFileMetas() != null) {
+            resp.getFileMetas().forEach(m -> {
+                String preview = String.valueOf(m.getOrDefault("textPreview", ""));
+                String previewOneline = preview.replaceAll("\\s+", " ").trim();
+                log.info("[CollusiveBidPythonRule] fileMeta name={} sizeBytes={} textLen={} sha256={} content={}",
+                        m.get("name"), m.get("sizeBytes"), m.get("textLen"), m.get("sha256"), previewOneline);
+            });
+        }
+        resp.getComparisons().forEach(c -> {
+            Map<String, Object> r = c.getResult();
+            if (r == null) return;
+            log.info("[CollusiveBidPythonRule] comparison A={} B={} cosine={} difflib={} longest={} segs50+={} blocks500+={} lenA={} lenB={}",
+                    c.getA(), c.getB(),
+                    r.get("tfidfCosine"), r.get("difflibRatio"),
+                    r.get("longestCommonRunChars"), r.get("matchingSegments50+"), r.get("commonBlocksCount500+"),
+                    r.get("lenA"), r.get("lenB"));
+        });
 
         List<ClueResult> results = new ArrayList<>();
         for (BidAnalysisCompareBase64Response.FileComparison c : resp.getComparisons()) {
@@ -97,27 +121,40 @@ public class CollusiveBidPythonRule implements AuditRule {
             int longest = asInt(r.get("longestCommonRunChars"));
             int segs50 = asInt(r.get("matchingSegments50+"));
             int blocks500 = asInt(r.get("commonBlocksCount500+"));
+            double cosine = asDouble(r.get("tfidfCosine"));
+            double difflib = asDouble(r.get("difflibRatio"));
+            int lenA = asInt(r.get("lenA"));
+            int lenB = asInt(r.get("lenB"));
 
-            boolean abnormal = longest >= minCommonChars || segs50 >= minSamePlaces || blocks500 > 0;
+            // 常规：长公共块 / 多处相同片段 / 500+字符块
+            boolean byBlock = longest >= minCommonChars || segs50 >= minSamePlaces || blocks500 > 0;
+            // 补充：文字虽少（如扫描件OCR不全），但余弦+difflib双高 → 亦视为异常
+            boolean byCosine = cosine >= cosineThreshold
+                    && difflib >= cosineThreshold
+                    && lenA >= minTextLenForCosine
+                    && lenB >= minTextLenForCosine;
+
+            boolean abnormal = byBlock || byCosine;
             if (!abnormal) continue;
 
             ClueResult clue = new ClueResult();
             clue.setApplyCode(applyCode);
             clue.setClueType(getClueType());
             clue.setRiskLevel(getRiskLevel());
+            String triggerReason = byBlock
+                    ? String.format("文本块命中（longestCommonRun=%d,segs50+=%d,blocks500+=%d）", longest, segs50, blocks500)
+                    : String.format("余弦双高命中（tfidfCosine=%.4f,difflibRatio=%.4f,文本长度A=%d/B=%d）", cosine, difflib, lenA, lenB);
+
             clue.setClueTitle("疑似围标串标（Python对比）：投标文件相同程度异常");
             clue.setClueDetail(String.format(
-                    "申请编码【%s】下，Python对比服务命中：\n- A: %s\n- B: %s\n" +
-                            "longestCommonRunChars=%d（阈值=%d）\n" +
-                            "matchingSegments50+=%d（阈值=%d）\n" +
-                            "commonBlocksCount500+=%d\n" +
-                            "tfidfCosine=%s, difflibRatio=%s\n",
+                    "申请[%s] A:%s B:%s | 触发:%s | longest=%d(阈值%d) segs50+=%d(阈值%d) blocks500+=%d | cosine=%.4f difflib=%.4f(阈值%.2f) | lenA=%d lenB=%d",
                     applyCode, c.getA(), c.getB(),
+                    triggerReason,
                     longest, minCommonChars,
                     segs50, minSamePlaces,
                     blocks500,
-                    String.valueOf(r.get("tfidfCosine")),
-                    String.valueOf(r.get("difflibRatio"))
+                    cosine, difflib, cosineThreshold,
+                    lenA, lenB
             ));
             clue.setRelatedAmount(BigDecimal.ZERO);
             clue.setRelatedSupplier("未知（MinIO文件对比）");
@@ -136,6 +173,16 @@ public class CollusiveBidPythonRule implements AuditRule {
             return Integer.parseInt(v.toString());
         } catch (Exception e) {
             return 0;
+        }
+    }
+
+    private double asDouble(Object v) {
+        if (v == null) return 0.0;
+        if (v instanceof Number n) return n.doubleValue();
+        try {
+            return Double.parseDouble(v.toString());
+        } catch (Exception e) {
+            return 0.0;
         }
     }
 

@@ -1,3 +1,9 @@
 /.env
 /bid-analysis-service/.venv/
 /bid-analysis-service/.idea/
+/**/target
+/**/**/target
+/**/**/**/target
+/.idea
+/.fastRequest
+/.vscode

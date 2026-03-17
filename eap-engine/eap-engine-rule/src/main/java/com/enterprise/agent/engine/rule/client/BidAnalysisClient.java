@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 /**
  * Python bid-analysis-service HTTP Client
  */
-@FeignClient(name = "bid-analysis-service", url = "${eap.audit.collusive.python.base-url:http://localhost:8099}")
+@FeignClient(name = "bid-analysis-service",
+        url = "${eap.audit.collusive.python.base-url:http://localhost:8099}",
+        configuration = BidAnalysisFeignConfig.class)
 public interface BidAnalysisClient {
 
     @PostMapping("/analyze/compare-base64")

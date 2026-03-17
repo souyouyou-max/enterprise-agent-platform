@@ -1,9 +1,24 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
+from pathlib import Path
+
+# Load .env files at module level so worker processes (uvicorn reload) also get env vars
+# override=True ensures .env values win over system environment variables
+try:
+    from dotenv import load_dotenv
+    _svc_dir = Path(__file__).resolve().parents[1]
+    load_dotenv(_svc_dir / ".env", override=True)
+    load_dotenv(_svc_dir.parent / ".env", override=False)
+except Exception:
+    pass
+
+print(f"[bid-analysis] TESSDATA_PREFIX={os.environ.get('TESSDATA_PREFIX', '(not set)')}", flush=True)
 
 from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from app.services.parse import parse_upload_to_text
@@ -12,6 +27,12 @@ from app.services.price_patterns import analyze_price_patterns
 
 
 app = FastAPI(title="Bid Analysis Service", version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 logger = logging.getLogger("bid-analysis")
 
 
@@ -102,7 +123,7 @@ class Base64File(BaseModel):
 class CompareBase64Request(BaseModel):
     files: list[Base64File] = Field(min_length=2)
     include_text_preview: bool = Field(default=True, description="Return extracted text preview per file")
-    preview_chars: int = Field(default=800, ge=100, le=5000, description="Max chars in text preview")
+    preview_chars: int = Field(default=0, ge=0, description="Max chars in text preview; 0 = full text")
 
 
 @app.post("/analyze/compare-base64")
@@ -149,7 +170,10 @@ def analyze_compare_base64(req: CompareBase64Request):
             "textLen": len(t_norm),
         }
         if req.include_text_preview:
-            meta["textPreview"] = (t[: req.preview_chars] + ("..." if len(t) > req.preview_chars else "")).strip()
+            if req.preview_chars == 0:
+                meta["textPreview"] = t.strip()
+            else:
+                meta["textPreview"] = (t[: req.preview_chars] + ("..." if len(t) > req.preview_chars else "")).strip()
         file_metas.append(meta)
 
     comparisons = []

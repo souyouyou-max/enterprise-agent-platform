@@ -16,10 +16,10 @@ import java.util.List;
 public interface ClueResultMapper extends BaseMapper<ClueResult> {
 
     @Select("SELECT * FROM clue_result WHERE apply_code = #{applyCode} ORDER BY created_at DESC")
-    List<ClueResult> findByOrgCode(@Param("applyCode") String applyCode);
+    List<ClueResult> findByApplyCode(@Param("applyCode") String applyCode);
 
     @Select("SELECT * FROM clue_result WHERE apply_code = #{applyCode} AND status = 'PENDING' ORDER BY created_at DESC")
-    List<ClueResult> findPendingByOrgCode(@Param("applyCode") String applyCode);
+    List<ClueResult> findPendingByApplyCode(@Param("applyCode") String applyCode);
 
     @Delete("DELETE FROM clue_result WHERE apply_code = #{applyCode} AND status = 'PENDING'")
     int deletePendingByApplyCode(@Param("applyCode") String applyCode);

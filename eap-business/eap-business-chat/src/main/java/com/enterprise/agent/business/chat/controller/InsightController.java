@@ -1,9 +1,9 @@
-package com.enterprise.agent.app.controller;
+package com.enterprise.agent.business.chat.controller;
 
-import com.enterprise.agent.common.core.response.ResponseResult;
 import com.enterprise.agent.business.chat.InsightAgent;
-import com.enterprise.agent.dataservice.insight.model.InsightResult;
+import com.enterprise.agent.common.core.response.ResponseResult;
 import com.enterprise.agent.dataservice.insight.service.NlToSqlService;
+import com.enterprise.agent.dataservice.insight.model.InsightResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

@@ -116,17 +116,17 @@ public class AuditEngineService {
      * @param orgCode 申请编码
      * @return PENDING 状态的疑点列表
      */
-    public List<ClueResult> getPendingClues(String orgCode) {
-        return clueResultMapper.findPendingByOrgCode(orgCode);
+    public List<ClueResult> getPendingClues(String applyCode) {
+        return clueResultMapper.findPendingByApplyCode(applyCode);
     }
 
     /**
      * 查询申请全部疑点线索（含已处理）
      *
-     * @param orgCode 申请编码
+     * @param applyCode 申请编码
      * @return 全部疑点列表
      */
-    public List<ClueResult> getAllClues(String orgCode) {
-        return clueResultMapper.findByOrgCode(orgCode);
+    public List<ClueResult> getAllClues(String applyCode) {
+        return clueResultMapper.findByApplyCode(applyCode);
     }
 }

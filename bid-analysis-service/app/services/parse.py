@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import UploadFile
 from pypdf import PdfReader
 from docx import Document
@@ -26,12 +27,13 @@ async def parse_upload_to_text(f: UploadFile) -> str:
     else:
         text = _bytes_to_text(data)
     text_norm_len = len("".join(text.split()))
+    text_oneline = " ".join(text.split())
     logger.info(
-        "parse done file=%s method=%s textLen=%d preview=%s",
+        "parse done file=%s method=%s textLen=%d content=%s",
         f.filename,
         _detect_method(name),
         text_norm_len,
-        (text[:200] + "...").strip() if len(text) > 200 else text.strip(),
+        (text_oneline[:500] + "...") if len(text_oneline) > 500 else text_oneline,
     )
     return text
 
@@ -57,7 +59,7 @@ def _parse_pdf_bytes(data: bytes) -> str:
             parts.append("")
     text = "\n".join(parts).strip()
 
-    # 2) OCR fallback for scanned PDFs (optional)
+    # 2) OCR fallback for scanned PDFs
     ocr_enabled = os.getenv("OCR_ENABLED", "false").lower() in ("1", "true", "yes", "y")
     min_len = int(os.getenv("OCR_MIN_TEXT_LEN", "800"))
     norm_len = len("".join(text.split()))
@@ -72,14 +74,12 @@ def _parse_pdf_bytes(data: bytes) -> str:
 
 
 def _ocr_pdf_bytes(data: bytes) -> str:
-    """
-    OCR each page using PyMuPDF render + pytesseract.
-    Requires system `tesseract` installed and in PATH.
-    """
+    """OCR each page using PyMuPDF render + pytesseract (parallel)."""
     try:
-        import fitz  # PyMuPDF
-        import pytesseract
+        import fitz
         from PIL import Image
+        import pytesseract
+        import numpy as np
     except Exception as e:
         logger.warning("OCR dependencies not available: %s", e)
         return ""
@@ -90,28 +90,85 @@ def _ocr_pdf_bytes(data: bytes) -> str:
         logger.warning("fitz open failed: %s", e)
         return ""
 
-    dpi = int(os.getenv("OCR_DPI", "200"))
-    zoom = dpi / 72.0
-    mat = fitz.Matrix(zoom, zoom)
+    dpi          = int(os.getenv("OCR_DPI", "120"))
+    zoom         = dpi / 72.0
+    mat          = fitz.Matrix(zoom, zoom)
+    max_pages    = int(os.getenv("OCR_MAX_PAGES", "0"))
+    max_img_size = int(os.getenv("OCR_MAX_IMAGE_SIZE", "1600"))
+    workers      = int(os.getenv("OCR_WORKERS", "4"))
+    lang         = os.getenv("OCR_LANG", "chi_sim+eng")
 
-    lang = os.getenv("OCR_LANG", "chi_sim+eng")
-    logger.info("OCR start pages=%d dpi=%d lang=%s", len(doc), dpi, lang)
-    out_parts: list[str] = []
-    for i, page in enumerate(doc):
+    pages = list(doc)
+    if max_pages > 0:
+        pages = pages[:max_pages]
+
+    # 渲染所有页为 numpy array（fitz 非线程安全，统一在主线程完成）
+    page_arrays: list[tuple[int, np.ndarray]] = []
+    for i, page in enumerate(pages):
         try:
+            rotation = page.rotation
+            if rotation:
+                page.set_rotation(0)
             pix = page.get_pixmap(matrix=mat, alpha=False)
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            page_text = pytesseract.image_to_string(img, lang=lang)
-            logger.debug("OCR page=%d textLen=%d", i, len(page_text.strip()))
-            out_parts.append(page_text)
+            if rotation:
+                page.set_rotation(rotation)
+            arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, 3)
+            # 图像尺寸上限，防止超大页面拖慢 OCR
+            if max_img_size > 0:
+                h, w = arr.shape[:2]
+                max_side = max(h, w)
+                if max_side > max_img_size:
+                    scale = max_img_size / max_side
+                    new_h, new_w = int(h * scale), int(w * scale)
+                    img = Image.fromarray(arr)
+                    arr = np.array(img.resize((new_w, new_h), Image.LANCZOS))
+                    logger.info("OCR page=%d resized %dx%d -> %dx%d", i, w, h, new_w, new_h)
+            page_arrays.append((i, arr))
         except Exception as e:
-            logger.warning("OCR page=%d failed: %s", i, e)
-            out_parts.append("")
+            logger.warning("OCR render page=%d failed: %s", i, e)
     try:
         doc.close()
     except Exception:
         pass
-    return "\n".join(out_parts).strip()
+
+    logger.info("OCR start pages=%d/%d dpi=%d engine=tesseract lang=%s workers=%d",
+                len(page_arrays), len(pages), dpi, lang, workers)
+
+    # pytesseract 每次调用启动独立子进程，天然线程安全，直接并行
+    def ocr_page(args: tuple[int, np.ndarray]) -> tuple[int, str]:
+        idx, arr = args
+        try:
+            from PIL import ImageOps, ImageFilter
+            img = Image.fromarray(arr)
+            # 图像预处理：灰度化 + 对比度拉伸 + 锐化，改善低 DPI 扫描件识别质量
+            img = img.convert('L')
+            img = ImageOps.autocontrast(img)
+            img = img.filter(ImageFilter.SHARPEN)
+            # 方向检测并自动旋转（修正扫描件 90/180/270° 旋转问题）
+            try:
+                osd = pytesseract.image_to_osd(img, output_type=pytesseract.Output.DICT)
+                angle = osd.get("rotate", 0)
+                if angle:
+                    img = img.rotate(-angle, expand=True)
+                    logger.info("OCR page=%d auto-rotated angle=%d", idx, angle)
+            except Exception:
+                pass  # osd.traineddata 不存在时跳过，不影响正常 OCR
+            config = os.getenv("OCR_CONFIG", "--psm 6 --oem 3")
+            text = pytesseract.image_to_string(img, lang=lang, config=config)
+            oneline = " ".join(text.split())
+            logger.info("OCR page=%d textLen=%d content=%s", idx, len(oneline),
+                        (oneline[:300] + "...") if len(oneline) > 300 else oneline)
+            return idx, text
+        except Exception as e:
+            logger.warning("OCR page=%d failed: %s", idx, e)
+            return idx, ""
+
+    results: dict[int, str] = {}
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        for idx, text in pool.map(ocr_page, page_arrays):
+            results[idx] = text
+
+    return "\n".join(results.get(i, "") for i in range(len(page_arrays))).strip()
 
 
 def _parse_docx_bytes(data: bytes) -> str:
@@ -130,5 +187,3 @@ def _bytes_to_text(data: bytes) -> str:
         except Exception:
             pass
     return ""
-
-

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>PDF 识别测试</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f6fa; color: #333; }
+  .container { max-width: 960px; margin: 40px auto; padding: 0 20px; }
+  h1 { font-size: 20px; font-weight: 600; margin-bottom: 24px; color: #1a1a2e; }
+
+  .card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.08); padding: 24px; margin-bottom: 20px; }
+  .card h2 { font-size: 14px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 16px; }
+
+  .row { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+  label { font-size: 13px; color: #555; display: block; margin-bottom: 6px; }
+
+  input[type=text], input[type=number] {
+    border: 1px solid #ddd; border-radius: 6px; padding: 8px 12px;
+    font-size: 13px; width: 100%; outline: none;
+  }
+  input[type=text]:focus, input[type=number]:focus { border-color: #4f6ef7; }
+
+  .field { flex: 1; min-width: 160px; }
+
+  .drop-zone {
+    border: 2px dashed #c5cae9; border-radius: 8px; padding: 32px;
+    text-align: center; cursor: pointer; transition: all .2s; background: #fafbff;
+  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: #4f6ef7; background: #eef0ff; }
+  .drop-zone p { color: #888; font-size: 13px; margin-top: 8px; }
+  .drop-zone strong { font-size: 15px; color: #555; }
+
+  .file-list { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .file-tag {
+    background: #eef0ff; color: #4f6ef7; border-radius: 20px;
+    padding: 4px 12px; font-size: 12px; display: flex; align-items: center; gap: 6px;
+  }
+  .file-tag span { cursor: pointer; color: #999; }
+  .file-tag span:hover { color: #e53935; }
+
+  button {
+    background: #4f6ef7; color: #fff; border: none; border-radius: 6px;
+    padding: 10px 24px; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background .2s;
+  }
+  button:hover { background: #3a5ce5; }
+  button:disabled { background: #aaa; cursor: not-allowed; }
+  button.secondary { background: #f0f0f0; color: #555; }
+  button.secondary:hover { background: #e0e0e0; }
+
+  .status { font-size: 13px; padding: 8px 14px; border-radius: 6px; }
+  .status.loading { background: #fff8e1; color: #f57f17; }
+  .status.success { background: #e8f5e9; color: #2e7d32; }
+  .status.error { background: #ffebee; color: #c62828; }
+
+  .result-block { margin-top: 16px; }
+  .result-block h3 { font-size: 13px; font-weight: 600; color: #555; margin-bottom: 8px; }
+
+  .file-result {
+    border: 1px solid #eee; border-radius: 8px; margin-bottom: 12px; overflow: hidden;
+  }
+  .file-result-header {
+    background: #f8f9fa; padding: 10px 16px; display: flex;
+    justify-content: space-between; align-items: center; cursor: pointer;
+  }
+  .file-result-header .name { font-size: 13px; font-weight: 600; color: #333; }
+  .file-result-header .meta { font-size: 12px; color: #888; }
+  .file-result-body { padding: 14px 16px; font-size: 13px; line-height: 1.7; color: #444;
+    white-space: pre-wrap; word-break: break-all;
+    background: #fafafa; border-top: 1px solid #eee; }
+  .file-result-body.hidden { display: none; }
+
+  .comparison-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .comparison-table th { background: #f8f9fa; padding: 10px 12px; text-align: left;
+    font-weight: 600; color: #555; border-bottom: 2px solid #eee; }
+  .comparison-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+  .comparison-table tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge.high { background: #ffebee; color: #c62828; }
+  .badge.medium { background: #fff8e1; color: #e65100; }
+  .badge.low { background: #e8f5e9; color: #2e7d32; }
+
+  .progress-bar-wrap { background: #e0e0e0; border-radius: 4px; height: 6px; margin-top: 4px; }
+  .progress-bar { background: #4f6ef7; height: 6px; border-radius: 4px; transition: width .3s; }
+
+  pre.raw { background: #1e1e2e; color: #cdd6f4; padding: 16px; border-radius: 8px;
+    font-size: 12px; overflow: auto; max-height: 400px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📄 PDF 识别 & 相似度测试</h1>
+
+  <!-- 配置 -->
+  <div class="card">
+    <h2>服务配置</h2>
+    <div class="row">
+      <div class="field">
+        <label>Python 服务地址</label>
+        <input type="text" id="baseUrl" value="http://localhost:8099">
+      </div>
+      <div class="field" style="max-width:140px">
+        <label>预览字符数（0=全量）</label>
+        <input type="number" id="previewChars" value="0" min="0">
+      </div>
+    </div>
+  </div>
+
+  <!-- 上传 -->
+  <div class="card">
+    <h2>上传 PDF 文件</h2>
+    <div class="drop-zone" id="dropZone">
+      <strong>点击选择或拖拽 PDF 文件到此处</strong>
+      <p>支持多文件，用于相似度对比</p>
+      <input type="file" id="fileInput" accept=".pdf,.docx,.doc" multiple style="display:none">
+    </div>
+    <div class="file-list" id="fileList"></div>
+    <div style="margin-top:16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+      <button id="btnTest" onclick="runTest()">开始识别 & 对比</button>
+      <button class="secondary" onclick="clearAll()">清空</button>
+      <span id="statusMsg"></span>
+    </div>
+  </div>
+
+  <!-- 识别结果 -->
+  <div class="card" id="resultSection" style="display:none">
+    <h2>识别结果</h2>
+    <div id="fileResults"></div>
+  </div>
+
+  <!-- 相似度结果 -->
+  <div class="card" id="compareSection" style="display:none">
+    <h2>相似度对比</h2>
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>文件 A</th>
+          <th>文件 B</th>
+          <th>TF-IDF 余弦</th>
+          <th>Difflib 比率</th>
+          <th>最长公共块</th>
+          <th>50+片段数</th>
+          <th>500+块数</th>
+          <th>风险</th>
+        </tr>
+      </thead>
+      <tbody id="compareBody"></tbody>
+    </table>
+  </div>
+
+  <!-- 原始响应 -->
+  <div class="card" id="rawSection" style="display:none">
+    <h2>原始响应 <button class="secondary" style="padding:4px 10px;font-size:12px" onclick="toggleRaw()">展开/折叠</button></h2>
+    <pre class="raw" id="rawJson" style="display:none"></pre>
+  </div>
+</div>
+
+<script>
+let selectedFiles = [];
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.onclick = () => fileInput.click();
+fileInput.onchange = e => addFiles([...e.target.files]);
+
+dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('dragover'); };
+dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+dropZone.ondrop = e => {
+  e.preventDefault(); dropZone.classList.remove('dragover');
+  addFiles([...e.dataTransfer.files].filter(f => /\.(pdf|docx|doc)$/i.test(f.name)));
+};
+
+function addFiles(files) {
+  files.forEach(f => { if (!selectedFiles.find(x => x.name === f.name)) selectedFiles.push(f); });
+  renderFileList();
+}
+
+function renderFileList() {
+  const el = document.getElementById('fileList');
+  el.innerHTML = selectedFiles.map((f, i) => `
+    <div class="file-tag">
+      📄 ${f.name} <span onclick="removeFile(${i})">✕</span>
+    </div>`).join('');
+}
+
+function removeFile(i) { selectedFiles.splice(i, 1); renderFileList(); }
+
+function clearAll() {
+  selectedFiles = [];
+  renderFileList();
+  ['resultSection','compareSection','rawSection'].forEach(id => document.getElementById(id).style.display='none');
+  setStatus('');
+}
+
+function setStatus(msg, type='') {
+  const el = document.getElementById('statusMsg');
+  el.className = 'status ' + type;
+  el.textContent = msg;
+}
+
+function shortName(path) {
+  return path.split('/').pop().replace(/-技术文件.*\.pdf/,'').slice(0,20);
+}
+
+function riskBadge(cosine, difflib, longest) {
+  const score = cosine * 0.5 + difflib * 0.3 + (longest > 500 ? 0.2 : longest > 100 ? 0.1 : 0);
+  if (score > 0.85) return '<span class="badge high">高风险</span>';
+  if (score > 0.5)  return '<span class="badge medium">中风险</span>';
+  return '<span class="badge low">低风险</span>';
+}
+
+function progressBar(val) {
+  const pct = Math.round(val * 100);
+  return `<div>${pct}%</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>`;
+}
+
+async function runTest() {
+  if (selectedFiles.length === 0) { setStatus('请先选择文件', 'error'); return; }
+
+  const baseUrl = document.getElementById('baseUrl').value.replace(/\/$/, '');
+  const previewChars = Math.max(0, parseInt(document.getElementById('previewChars').value) || 0);
+
+  setStatus('识别中，请稍候…', 'loading');
+  document.getElementById('btnTest').disabled = true;
+
+  try {
+    // 读取文件为 base64
+    const files = await Promise.all(selectedFiles.map(async f => ({
+      filename: f.name,
+      content_b64: await toBase64(f)
+    })));
+
+    const resp = await fetch(`${baseUrl}/analyze/compare-base64`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files, include_text_preview: true, preview_chars: previewChars })
+    });
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+    const data = await resp.json();
+
+    setStatus(`✓ 完成，共 ${files.length} 个文件，${data.comparisons?.length || 0} 组对比`, 'success');
+    renderResults(data);
+
+  } catch (e) {
+    setStatus('请求失败：' + e.message, 'error');
+    console.error(e);
+  } finally {
+    document.getElementById('btnTest').disabled = false;
+  }
+}
+
+function renderResults(data) {
+  // 文件识别结果
+  const metas = data.fileMetas || [];
+  const fileResultsEl = document.getElementById('fileResults');
+  fileResultsEl.innerHTML = metas.map((m, i) => {
+    const preview = (m.textPreview || '（无识别文字）').replace(/\n+/g, '\n').trim();
+    return `
+      <div class="file-result">
+        <div class="file-result-header" onclick="toggleBody(${i})">
+          <span class="name">📄 ${m.name}</span>
+          <span class="meta">大小: ${(m.sizeBytes/1024).toFixed(0)} KB | 识别字符: ${m.textLen} | SHA256: ${m.sha256?.slice(0,12)}…</span>
+        </div>
+        <div class="file-result-body hidden" id="body-${i}">${preview || '（未提取到文字）'}</div>
+      </div>`;
+  }).join('');
+  document.getElementById('resultSection').style.display = 'block';
+
+  // 相似度对比
+  const comparisons = data.comparisons || [];
+  if (comparisons.length > 0) {
+    const rows = comparisons.map(c => {
+      const r = c.result || {};
+      const cosine = parseFloat(r.tfidfCosine || 0);
+      const difflib = parseFloat(r.difflibRatio || 0);
+      const longest = r.longestCommonRunChars || 0;
+      return `<tr>
+        <td>${shortName(c.a)}</td>
+        <td>${shortName(c.b)}</td>
+        <td>${progressBar(cosine)}</td>
+        <td>${progressBar(difflib)}</td>
+        <td>${longest}</td>
+        <td>${r['matchingSegments50+'] || 0}</td>
+        <td>${r['commonBlocksCount500+'] || 0}</td>
+        <td>${riskBadge(cosine, difflib, longest)}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('compareBody').innerHTML = rows;
+    document.getElementById('compareSection').style.display = 'block';
+  }
+
+  // 原始响应
+  document.getElementById('rawJson').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('rawSection').style.display = 'block';
+}
+
+function toggleBody(i) {
+  const el = document.getElementById(`body-${i}`);
+  el.classList.toggle('hidden');
+}
+
+function toggleRaw() {
+  const el = document.getElementById('rawJson');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function toBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+</script>
+</body>
+</html>

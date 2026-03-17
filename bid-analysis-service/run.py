@@ -12,11 +12,13 @@ if __name__ == "__main__":
     )
     logging.getLogger("bid-analysis").setLevel(getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO))
 
-    # Load env from repo root .env (optional)
+    # Load env: service .env first, then repo root .env
     try:
         from dotenv import load_dotenv
 
-        repo_root = Path(__file__).resolve().parents[1]
+        service_dir = Path(__file__).resolve().parent
+        repo_root = service_dir.parent
+        load_dotenv(service_dir / ".env", override=False)
         load_dotenv(repo_root / ".env", override=False)
     except Exception:
         pass
