@@ -1,1 +1,3 @@
 /.env
+/bid-analysis-service/.venv/
+/bid-analysis-service/.idea/
