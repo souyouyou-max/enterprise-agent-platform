@@ -3,9 +3,12 @@ package com.enterprise.agent.business.task.executor.toolkit;
 import com.enterprise.agent.tools.impl.CrmTool;
 import com.enterprise.agent.tools.impl.EmployeeTool;
 import com.enterprise.agent.tools.impl.SalesDataTool;
+import com.enterprise.agent.tools.impl.ZhengyanPlatformTool;
 import com.enterprise.agent.tools.impl.SqlGeneratorTool;
+import com.enterprise.agent.tools.impl.ZhengyanTextClassificationTool;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
@@ -29,6 +32,8 @@ public class ExecutorToolkit {
     private final EmployeeTool employeeTool;
     private final CrmTool crmTool;
     private final SqlGeneratorTool sqlGeneratorTool;
+    private final ZhengyanTextClassificationTool zhengyanTextClassificationTool;
+    private final ZhengyanPlatformTool zhengyanPlatformTool;
     private final ObjectMapper objectMapper;
 
     /**
@@ -77,6 +82,76 @@ public class ExecutorToolkit {
     }
 
     /**
+     * 正言语义文本分类
+     */
+    @Tool(description = "调用正言语义文本分类接口，对文本进行标签分类。" +
+            "text为待分类文本；labels为候选标签数组（可选）；topK与threshold可选。")
+    public String classifyTextSemantics(String text, String labelsJson, Integer topK, Double threshold) {
+        String safeText = text == null ? "" : text;
+        log.info("[ExecutorToolkit] classifyTextSemantics, text={}", safeText.substring(0, Math.min(50, safeText.length())));
+        try {
+            ObjectNode params = objectMapper.createObjectNode();
+            params.put("text", safeText);
+            if (labelsJson != null && !labelsJson.isBlank()) {
+                JsonNode labels = objectMapper.readTree(labelsJson);
+                if (labels.isArray()) {
+                    params.set("labels", labels);
+                }
+            }
+            if (topK != null) {
+                params.put("topK", topK);
+            }
+            if (threshold != null) {
+                params.put("threshold", threshold);
+            }
+            return zhengyanTextClassificationTool.execute(objectMapper.writeValueAsString(params));
+        } catch (Exception e) {
+            log.warn("[ExecutorToolkit] classifyTextSemantics 参数处理失败: {}", e.getMessage());
+            return "{\"success\":false,\"message\":\"参数格式错误，labelsJson应为JSON数组字符串\"}";
+        }
+    }
+
+    /**
+     * 正言图片识别转文本
+     */
+    @Tool(description = "调用正言 img2text 接口。输入 text(提问)、imageBase64(图片base64)、userInfoJson(包含user_id/user_name/user_dept_name/user_company)。")
+    public String img2Text(String text, String imageBase64, String userInfoJson) {
+        String safeText = text == null ? "" : text;
+        log.info("[ExecutorToolkit] img2Text, text={}", safeText.substring(0, Math.min(50, safeText.length())));
+        try {
+            ObjectNode params = objectMapper.createObjectNode();
+            params.put("text", safeText);
+            params.put("image", imageBase64 == null ? "" : imageBase64);
+            JsonNode userInfo = objectMapper.readTree(userInfoJson == null ? "{}" : userInfoJson);
+            params.set("user_info", userInfo);
+            return zhengyanPlatformTool.img2Text(objectMapper.writeValueAsString(params));
+        } catch (Exception e) {
+            log.warn("[ExecutorToolkit] img2Text 参数处理失败: {}", e.getMessage());
+            return "{\"success\":false,\"message\":\"参数格式错误，userInfoJson需为JSON对象\"}";
+        }
+    }
+
+    /**
+     * 正言专业问答
+     */
+    @Tool(description = "调用正言专业问答接口。输入sessionId、input、botCode、userInfoJson(含user_id/user_name/user_dept_name/user_company)。")
+    public String professionalQa(String sessionId, String input, String botCode, String userInfoJson) {
+        log.info("[ExecutorToolkit] professionalQa, sessionId={}, botCode={}", sessionId, botCode);
+        try {
+            ObjectNode params = objectMapper.createObjectNode();
+            params.put("session_id", sessionId == null ? "" : sessionId);
+            params.put("input", input == null ? "" : input);
+            params.put("bot_code", botCode == null ? "" : botCode);
+            JsonNode userInfo = objectMapper.readTree(userInfoJson == null ? "{}" : userInfoJson);
+            params.set("user_info", userInfo);
+            return zhengyanPlatformTool.professionalQa(objectMapper.writeValueAsString(params));
+        } catch (Exception e) {
+            log.warn("[ExecutorToolkit] professionalQa 参数处理失败: {}", e.getMessage());
+            return "{\"success\":false,\"message\":\"参数格式错误，userInfoJson需为JSON对象\"}";
+        }
+    }
+
+    /**
      * 检测数据异常（超出均值3倍标准差等情况）
      */
     @Tool(description = "检测JSON格式数据中的异常值（超出均值3倍或存在极端偏差），" +
@@ -89,7 +164,7 @@ public class ExecutorToolkit {
 
             // 遍历数字字段，收集数值
             List<Double> values = new ArrayList<>();
-            root.fields().forEachRemaining(entry -> {
+            root.properties().forEach(entry -> {
                 if (entry.getValue().isNumber()) {
                     values.add(entry.getValue().asDouble());
                 }
@@ -104,7 +179,7 @@ public class ExecutorToolkit {
                 double threshold = mean + 3 * stdDev;
 
                 int[] idx = {0};
-                root.fields().forEachRemaining(entry -> {
+                root.properties().forEach(entry -> {
                     if (entry.getValue().isNumber()) {
                         double val = entry.getValue().asDouble();
                         if (val > threshold && threshold > 0) {

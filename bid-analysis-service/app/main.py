@@ -17,16 +17,25 @@ except Exception:
 
 print(f"[bid-analysis] TESSDATA_PREFIX={os.environ.get('TESSDATA_PREFIX', '(not set)')}", flush=True)
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from app.services.parse import parse_upload_to_text
-from app.services.similarity import compare_texts_dual
+from app.services.parse import parse_upload_to_text, warmup_ocr, compute_pdf_page_hashes
+from app.services.similarity import compare_texts_dual, compare_page_hashes, overall_risk
 from app.services.price_patterns import analyze_price_patterns
 
 
-app = FastAPI(title="Bid Analysis Service", version="0.1.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    warmup_ocr()
+    yield
+
+
+app = FastAPI(title="Bid Analysis Service", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,6 +48,11 @@ logger = logging.getLogger("bid-analysis")
 @app.get("/health")
 def health():
     return {"ok": True}
+
+
+@app.get("/admin", include_in_schema=False)
+def admin():
+    return FileResponse(Path(__file__).resolve().parents[1] / "admin.html", media_type="text/html")
 
 
 class CompareRequest(BaseModel):
@@ -65,17 +79,15 @@ def analyze_compare_texts(req: CompareRequest):
 
     price_result = analyze_price_patterns(req.prices) if req.prices else None
     logger.info("compare-texts done comparisons=%d", len(comparisons))
-    return {"comparisons": comparisons, "pricePatterns": price_result}
+    return {"summary": overall_risk(comparisons), "comparisons": comparisons, "pricePatterns": price_result}
 
 
 @app.post("/analyze/compare-files")
 async def analyze_compare_files(files: list[UploadFile] = File(...)):
+    import asyncio
     logger.info("compare-files start count=%d names=%s", len(files), [f.filename for f in files])
-    texts: list[str] = []
-    filenames: list[str] = []
-    for f in files:
-        filenames.append(f.filename or "unknown")
-        texts.append(await parse_upload_to_text(f))
+    filenames = [f.filename or "unknown" for f in files]
+    texts = list(await asyncio.gather(*[parse_upload_to_text(f) for f in files]))
 
     comparisons = []
     n = len(texts)
@@ -90,7 +102,7 @@ async def analyze_compare_files(files: list[UploadFile] = File(...)):
             )
             comparisons.append({"a": filenames[i], "b": filenames[j], "result": res})
     logger.info("compare-files done comparisons=%d", len(comparisons))
-    return {"files": filenames, "comparisons": comparisons}
+    return {"summary": overall_risk(comparisons), "files": filenames, "comparisons": comparisons}
 
 
 @app.post("/analyze/compare-two-files")
@@ -98,9 +110,9 @@ async def analyze_compare_two_files(a: UploadFile = File(...), b: UploadFile = F
     """
     Compare exactly two files and return a single similarity result.
     """
+    import asyncio
     logger.info("compare-two-files start a=%s b=%s", a.filename, b.filename)
-    text_a = await parse_upload_to_text(a)
-    text_b = await parse_upload_to_text(b)
+    text_a, text_b = await asyncio.gather(parse_upload_to_text(a), parse_upload_to_text(b))
     res = compare_texts_dual(text_a, text_b)
     logger.info(
         "compare-two-files done a=%s b=%s tfidf=%s ratio=%s",
@@ -108,7 +120,9 @@ async def analyze_compare_two_files(a: UploadFile = File(...), b: UploadFile = F
         f"{res.get('tfidfCosine'):.4f}" if res.get("ok") else "n/a",
         f"{res.get('difflibRatio'):.4f}" if res.get("ok") else "n/a",
     )
+    comparisons = [{"a": a.filename or "a", "b": b.filename or "b", "result": res}]
     return {
+        "summary": overall_risk(comparisons),
         "a": a.filename or "a",
         "b": b.filename or "b",
         "result": res,
@@ -136,21 +150,23 @@ def analyze_compare_base64(req: CompareBase64Request):
     names: list[str] = []
     sizes: list[int] = []
     sha256s: list[str] = []
+    page_hashes: list[list[int]] = []   # pHash per file（仅 PDF）
     for f in req.files:
         names.append(f.filename)
         data = base64.b64decode(f.content_b64)
         sizes.append(len(data))
         sha256s.append(hashlib.sha256(data).hexdigest())
-        # reuse parse logic by mimicking filename extension
-        # (keep this local to avoid file I/O)
         from app.services.parse import _parse_pdf_bytes, _parse_docx_bytes, _bytes_to_text
         low = f.filename.lower()
         if low.endswith(".pdf"):
             texts.append(_parse_pdf_bytes(data))
+            page_hashes.append(compute_pdf_page_hashes(data))
         elif low.endswith(".docx"):
             texts.append(_parse_docx_bytes(data))
+            page_hashes.append([])
         else:
             texts.append(_bytes_to_text(data))
+            page_hashes.append([])
 
     logger.info(
         "compare-base64 start files=%d totalBytes=%d names=%s",
@@ -181,11 +197,17 @@ def analyze_compare_base64(req: CompareBase64Request):
     for i in range(n):
         for j in range(i + 1, n):
             res = compare_texts_dual(texts[i], texts[j])
-            comparisons.append({"a": names[i], "b": names[j], "result": res})
+            visual = compare_page_hashes(page_hashes[i], page_hashes[j])
+            comparisons.append({
+                "a": names[i],
+                "b": names[j],
+                "result": res,
+                "visualSimilarity": visual,
+            })
 
             if isinstance(res, dict) and res.get("ok") is True:
                 logger.info(
-                    "pair a=%s b=%s tfidf=%.4f ratio=%.4f longest=%s seg50=%s blocks500=%s",
+                    "pair a=%s b=%s tfidf=%.4f ratio=%.4f longest=%s seg50=%s blocks500=%s visualAvg=%s",
                     names[i],
                     names[j],
                     float(res.get("tfidfCosine") or 0.0),
@@ -193,13 +215,14 @@ def analyze_compare_base64(req: CompareBase64Request):
                     res.get("longestCommonRunChars"),
                     res.get("matchingSegments50+"),
                     res.get("commonBlocksCount500+"),
+                    f"{visual.get('avgPageSim', 0):.4f}" if visual.get("ok") else "n/a",
                 )
             else:
                 reason = res.get("reason") if isinstance(res, dict) else None
                 logger.info("pair a=%s b=%s not_ok reason=%s", names[i], names[j], reason)
 
     logger.info("compare-base64 done comparisons=%d elapsedMs=%.2f", len(comparisons), (time.perf_counter() - t0) * 1000.0)
-    return {"files": names, "fileMetas": file_metas, "comparisons": comparisons}
+    return {"summary": overall_risk(comparisons), "files": names, "fileMetas": file_metas, "comparisons": comparisons}
 
 
 class CompareTwoTextsRequest(BaseModel):

@@ -30,7 +30,7 @@ public class PlannerAgent extends BaseAgent {
 
             规则：
             1. 子任务必须具体、可操作，避免模糊描述
-            2. 每个子任务需标注所需工具（可选值：getSalesData、getEmployeeInfo、queryCrmData、generateSqlQuery、none）
+            2. 每个子任务需标注所需工具（可选值：getSalesData、getEmployeeInfo、queryCrmData、generateSqlQuery、classifyTextSemantics、img2Text、professionalQa、none）
             3. 按执行顺序排列子任务
             4. 严格输出 JSON 格式，不要包含任何额外文字
 
@@ -101,7 +101,9 @@ public class PlannerAgent extends BaseAgent {
 
                 请将此目标拆解为 3-5 个具体可执行的子任务，严格输出 JSON 格式。
                 可用工具：getSalesData（部门+季度销售数据）、getEmployeeInfo（员工信息）、
-                         queryCrmData（CRM客户数据）、generateSqlQuery（自然语言转SQL）
+                         queryCrmData（CRM客户数据）、generateSqlQuery（自然语言转SQL）、
+                         classifyTextSemantics（语义文本分类）、img2Text（图片识别转文本）、
+                         professionalQa（专业知识问答）
                 """, goal);
     }
 

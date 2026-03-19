@@ -12,7 +12,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,15 @@ public class InteractionCenterController {
     public ResponseResult<InteractionResult> chat(@Valid @RequestBody ChatRequest request) {
         InteractionResult result = interactionCenterAgent.chat(request.getSessionId(), request.getMessage());
         return ResponseResult.success(result);
+    }
+
+    @Operation(
+            summary = "流式对话（SSE）",
+            description = "与普通对话相同逻辑，但以 Server-Sent Events 形式逐 token 推送，适合前端实时打字机效果"
+    )
+    @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> chatStream(@Valid @RequestBody ChatRequest request) {
+        return interactionCenterAgent.chatStream(request.getSessionId(), request.getMessage());
     }
 
     @Operation(summary = "创建新会话", description = "创建一个新的对话会话，返回 sessionId 供后续使用")

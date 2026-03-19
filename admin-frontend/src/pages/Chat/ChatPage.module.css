@@ -1,0 +1,140 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 12px;
+  height: calc(100vh - 56px - 48px);
+  display: flex;
+  flex-direction: column;
+}
+
+.panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.messageArea {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 12px 0;
+  background:
+    radial-gradient(1000px 450px at 10% -10%, rgba(124, 143, 252, 0.18) 0%, rgba(124, 143, 252, 0) 60%),
+    radial-gradient(900px 400px at 95% 0%, rgba(89, 196, 255, 0.14) 0%, rgba(89, 196, 255, 0) 55%),
+    linear-gradient(180deg, rgba(250, 250, 252, 1) 0%, rgba(245, 246, 250, 1) 100%);
+  border-radius: 12px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0;
+  align-items: flex-start;
+}
+
+.rowUser {
+  justify-content: flex-end;
+}
+
+.rowAssistant {
+  justify-content: flex-start;
+}
+
+.bubble {
+  max-width: min(720px, 78%);
+  padding: 10px 12px;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.65;
+}
+
+.bubbleUser {
+  background: linear-gradient(135deg, #7c8ffc 0%, #5b7cfa 100%);
+  color: #fff;
+  border-top-right-radius: 6px;
+}
+
+.bubbleAssistant {
+  background: rgba(255, 255, 255, 0.92);
+  color: rgba(0, 0, 0, 0.88);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-top-left-radius: 6px;
+}
+
+.meta {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.composer {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.attachmentBar {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.attachmentThumbList {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.attachmentThumb {
+  width: 84px;
+  height: 84px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  object-fit: cover;
+  background: #fff;
+}
+
+.bubbleImage {
+  width: 220px;
+  max-width: 100%;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.bubbleImageList {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.attachmentTagList {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  background: currentColor;
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+

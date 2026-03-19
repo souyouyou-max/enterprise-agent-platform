@@ -1,0 +1,37 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { ConfigProvider as AntdConfig } from 'antd'
+import zhCN from 'antd/locale/zh_CN'
+import { ConfigProvider } from '@/store/config'
+import MainLayout from '@/layouts/MainLayout'
+import HealthPage from '@/pages/Health'
+import CompareTwoTextsPage from '@/pages/CompareTwoTexts'
+import CompareTextsPage from '@/pages/CompareTexts'
+import CompareTwoFilesPage from '@/pages/CompareTwoFiles'
+import CompareFilesPage from '@/pages/CompareFiles'
+import CompareBase64Page from '@/pages/CompareBase64'
+import DiffViewerPage from '@/pages/DiffViewer'
+import ChatPage from '@/pages/Chat'
+
+export default function App() {
+  return (
+    <AntdConfig locale={zhCN} theme={{ token: { colorPrimary: '#7c8ffc' } }}>
+      <ConfigProvider>
+        <BrowserRouter>
+          <MainLayout>
+            <Routes>
+              <Route path="/" element={<Navigate to="/health" replace />} />
+              <Route path="/health" element={<HealthPage />} />
+              <Route path="/compare-two-texts" element={<CompareTwoTextsPage />} />
+              <Route path="/compare-texts" element={<CompareTextsPage />} />
+              <Route path="/compare-two-files" element={<CompareTwoFilesPage />} />
+              <Route path="/compare-files" element={<CompareFilesPage />} />
+              <Route path="/compare-base64" element={<CompareBase64Page />} />
+              <Route path="/diff-viewer" element={<DiffViewerPage />} />
+              <Route path="/chat" element={<ChatPage />} />
+            </Routes>
+          </MainLayout>
+        </BrowserRouter>
+      </ConfigProvider>
+    </AntdConfig>
+  )
+}

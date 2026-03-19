@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>Bid Analysis · 管理端</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f0f2f5;color:#333;display:flex;height:100vh;overflow:hidden}
+
+/* ── 侧边栏 ── */
+.sidebar{width:220px;background:#1a1d2e;color:#ccc;display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-logo{padding:20px 18px 16px;border-bottom:1px solid #2e3150}
+.sidebar-logo .title{font-size:15px;font-weight:700;color:#fff}
+.sidebar-logo .sub{font-size:11px;color:#666;margin-top:3px}
+.health-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#444;margin-right:6px;vertical-align:middle;transition:background .3s}
+.health-dot.ok{background:#4caf50}.health-dot.err{background:#f44336}
+.nav{flex:1;overflow-y:auto;padding:8px 0}
+
+/* nav groups */
+.nav-group{font-size:10px;font-weight:700;letter-spacing:.8px;color:#555;padding:14px 18px 6px;text-transform:uppercase}
+.nav-group-toggle{font-size:10px;font-weight:700;letter-spacing:.8px;color:#555;padding:14px 18px 6px;text-transform:uppercase;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none}
+.nav-group-toggle:hover{color:#888}
+.toggle-icon{font-size:9px;transition:transform .2s}
+.nav-group-body{overflow:hidden;transition:max-height .25s ease}
+.nav-group-body.collapsed{max-height:0!important}
+
+.nav-item{display:flex;align-items:center;padding:9px 18px;cursor:pointer;font-size:13px;border-left:3px solid transparent;transition:all .15s;gap:8px}
+.nav-item:hover{background:#252840;color:#fff}
+.nav-item.active{background:#252840;color:#7c8ffc;border-left-color:#7c8ffc}
+.nav-item .method{font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;flex-shrink:0}
+.method.get{background:#0d6e3e;color:#6ee7b7}
+.method.post{background:#1e3a5f;color:#93c5fd}
+.nav-item .feat-icon{font-size:14px;flex-shrink:0}
+.sidebar-footer{padding:14px 18px;border-top:1px solid #2e3150;font-size:11px;color:#555}
+
+/* ── 主内容 ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-title{font-size:14px;font-weight:600;color:#1a1d2e}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.base-url-wrap{display:flex;align-items:center;gap:8px;font-size:12px;color:#888}
+.base-url-wrap input{border:1px solid #ddd;border-radius:5px;padding:5px 10px;font-size:12px;width:200px;outline:none}
+.base-url-wrap input:focus{border-color:#7c8ffc}
+.btn-health{font-size:11px;padding:5px 12px;border-radius:5px;border:1px solid #ddd;background:#fff;cursor:pointer;color:#555}
+.btn-health:hover{background:#f5f5f5}
+
+.content{flex:1;overflow-y:auto;padding:24px}
+.panel{display:none}.panel.active{display:block}
+.panel-header{margin-bottom:20px}
+.panel-title{font-size:18px;font-weight:700;color:#1a1d2e;display:flex;align-items:center;gap:10px}
+.panel-desc{font-size:13px;color:#888;margin-top:6px}
+.endpoint-badge{font-size:11px;padding:3px 10px;border-radius:4px;font-weight:600;font-family:monospace}
+.endpoint-badge.post{background:#dbeafe;color:#1d4ed8}
+.endpoint-badge.get{background:#dcfce7;color:#166534}
+
+.form-section{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:20px;margin-bottom:16px}
+.form-section h3{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:14px}
+.form-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.form-row:last-child{margin-bottom:0}
+.form-field{flex:1;min-width:200px}
+.form-field label{display:block;font-size:12px;color:#666;margin-bottom:5px;font-weight:500}
+.form-field textarea{width:100%;border:1px solid #e0e0e0;border-radius:6px;padding:10px;font-size:13px;line-height:1.6;resize:vertical;outline:none;min-height:100px;font-family:inherit}
+.form-field textarea:focus{border-color:#7c8ffc}
+.form-field input[type=text],.form-field input[type=number]{width:100%;border:1px solid #e0e0e0;border-radius:6px;padding:8px 10px;font-size:13px;outline:none}
+.form-field input:focus{border-color:#7c8ffc}
+
+.drop-zone{border:2px dashed #c5cae9;border-radius:8px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#fafbff}
+.drop-zone:hover,.drop-zone.dragover{border-color:#7c8ffc;background:#eef0ff}
+.drop-zone strong{font-size:14px;color:#555}
+.drop-zone p{font-size:12px;color:#999;margin-top:6px}
+.file-list{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}
+.file-tag{background:#eef0ff;color:#4f6ef7;border-radius:16px;padding:3px 10px;font-size:12px;display:flex;align-items:center;gap:5px}
+.file-tag .rm{cursor:pointer;color:#aaa}.file-tag .rm:hover{color:#e53935}
+
+.action-bar{display:flex;align-items:center;gap:10px;margin-top:4px}
+button.primary{background:#7c8ffc;color:#fff;border:none;border-radius:6px;padding:9px 22px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s}
+button.primary:hover{background:#5c6fec}
+button.primary:disabled{background:#bbb;cursor:not-allowed}
+button.secondary{background:#f3f4f6;color:#555;border:none;border-radius:6px;padding:9px 18px;font-size:13px;cursor:pointer}
+button.secondary:hover{background:#e5e7eb}
+.status-msg{font-size:13px;padding:6px 12px;border-radius:6px}
+.status-msg.loading{background:#fff8e1;color:#b45309}
+.status-msg.success{background:#dcfce7;color:#166534}
+.status-msg.error{background:#fee2e2;color:#991b1b}
+
+/* ── 响应区 ── */
+.response-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden}
+.response-header{padding:12px 18px;background:#f8f9fa;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+.response-header span{font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px}
+.response-tabs{display:flex;gap:0}
+.response-tab{font-size:12px;padding:4px 12px;cursor:pointer;border-radius:4px;color:#888}
+.response-tab.active{background:#eef0ff;color:#4f6ef7;font-weight:600}
+.response-body{padding:0}
+.response-pane{display:none}.response-pane.active{display:block}
+pre.json-out{background:#1e1e2e;color:#cdd6f4;padding:16px 18px;font-size:12px;overflow:auto;max-height:420px;margin:0;line-height:1.5}
+.result-table{width:100%;border-collapse:collapse;font-size:13px}
+.result-table th{background:#f8f9fa;padding:9px 12px;text-align:left;font-weight:600;color:#555;border-bottom:2px solid #eee;font-size:12px}
+.result-table td{padding:9px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.result-table tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700}
+.badge.high{background:#fee2e2;color:#991b1b}
+.badge.medium{background:#fef3c7;color:#92400e}
+.badge.low{background:#dcfce7;color:#166534}
+.bar-wrap{background:#e5e7eb;border-radius:3px;height:5px;margin-top:3px}
+.bar{background:#7c8ffc;height:5px;border-radius:3px}
+.empty-state{padding:40px;text-align:center;color:#aaa;font-size:13px}
+
+/* ── 健康面板 ── */
+.health-panel{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.health-card{flex:1;min-width:140px;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:16px 18px}
+.health-card .val{font-size:22px;font-weight:700;color:#1a1d2e;margin-bottom:4px}
+.health-card .lbl{font-size:12px;color:#888}
+
+/* ── 综合结论卡片 ── */
+.summary-card{border-radius:10px;padding:18px 22px;margin-bottom:16px;display:flex;align-items:center;gap:20px;border-left:5px solid #ccc}
+.summary-card.high{background:#fff1f2;border-left-color:#ef4444}
+.summary-card.medium{background:#fffbeb;border-left-color:#f59e0b}
+.summary-card.low{background:#f0fdf4;border-left-color:#22c55e}
+.summary-card.unknown{background:#f8f9fa;border-left-color:#aaa}
+.summary-icon{font-size:32px;flex-shrink:0}
+.summary-main{flex:1}
+.summary-label{font-size:17px;font-weight:700;margin-bottom:6px}
+.summary-card.high .summary-label{color:#b91c1c}
+.summary-card.medium .summary-label{color:#b45309}
+.summary-card.low .summary-label{color:#15803d}
+.summary-meta{font-size:12px;color:#888;display:flex;gap:16px;flex-wrap:wrap}
+.summary-meta span{display:flex;align-items:center;gap:4px}
+.summary-worst{font-size:12px;margin-top:6px;color:#666}
+.summary-worst strong{color:#333}
+
+/* ── text-preview ── */
+.text-preview-block{border:1px solid #eee;border-radius:8px;margin-bottom:10px;overflow:hidden}
+.text-preview-hd{background:#f8f9fa;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.text-preview-hd .fname{font-size:13px;font-weight:600}
+.text-preview-hd .fmeta{font-size:11px;color:#aaa}
+.text-preview-bd{padding:12px 14px;font-size:12px;line-height:1.7;color:#555;white-space:pre-wrap;word-break:break-all;background:#fafafa;border-top:1px solid #eee;max-height:240px;overflow-y:auto;display:none}
+
+/* ════════════════════════════════════════════
+   文件相似度对比面板
+   ════════════════════════════════════════════ */
+.diff-panel-wrap{display:flex;flex-direction:column;gap:0}
+
+/* 上传区 */
+.diff-upload-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.diff-drop{border:2px dashed #c5cae9;border-radius:8px;padding:22px 16px;text-align:center;cursor:pointer;transition:all .2s;background:#fafbff;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.diff-drop:hover,.diff-drop.dragover{border-color:#7c8ffc;background:#eef0ff}
+.diff-drop.has-file{border-color:#22c55e;background:#f0fdf4}
+.diff-drop .dd-label{font-size:13px;font-weight:600;color:#555;margin-bottom:4px}
+.diff-drop .dd-sub{font-size:11px;color:#999}
+.diff-drop .dd-file{font-size:12px;color:#166534;font-weight:600;margin-top:4px}
+
+/* 图例 */
+.diff-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;padding:10px 14px;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.diff-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#555}
+.dl-dot{width:14px;height:14px;border-radius:3px;flex-shrink:0}
+.dl-dot.eq{background:#bbf7d0;border:1px solid #86efac}
+.dl-dot.del{background:#fee2e2;border:1px solid #fca5a5}
+.dl-dot.ins{background:#bfdbfe;border:1px solid #93c5fd}
+.dl-dot.chg{background:#fef3c7;border:1px solid #fde68a}
+.dl-dot.cmark{background:#fca5a5;border:1px solid #f87171}
+
+/* 统计栏 */
+.diff-stats-bar{display:flex;gap:20px;flex-wrap:wrap;padding:12px 16px;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:12px;font-size:13px}
+.diff-stat{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:80px}
+.diff-stat .sv{font-size:20px;font-weight:700;color:#1a1d2e}
+.diff-stat .sk{font-size:11px;color:#888}
+.diff-stat .sv.del{color:#dc2626}
+.diff-stat .sv.ins{color:#16a34a}
+.diff-stat .sv.chg{color:#d97706}
+.diff-stat .sv.eq{color:#16a34a}
+
+/* 对比视图容器 */
+.diff-view-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden;display:flex;flex-direction:column}
+.diff-view-header{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #eee}
+.diff-view-hd-cell{padding:10px 14px;font-size:12px;font-weight:700;color:#555;background:#f8f9fa;display:flex;align-items:center;gap:8px}
+.diff-view-hd-cell:first-child{border-right:1px solid #eee}
+.dv-fname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* 单表格 body（替代双栏，确保行对齐）*/
+.diff-view-body{overflow:auto;height:calc(100vh - 330px);min-height:300px}
+.diff-table{width:100%;border-collapse:collapse;table-layout:fixed;font-family:"Menlo","Consolas","SF Mono",monospace;font-size:12.5px;line-height:1.6}
+.diff-table col.cn{width:44px}
+.diff-table col.ct{width:calc(50% - 44px)}
+.diff-table td{padding:0;vertical-align:top;border-bottom:1px solid rgba(0,0,0,.04)}
+.dl-num{padding:2px 6px;text-align:right;font-size:11px;color:#bbb;background:#fafafa;border-right:1px solid #eee;user-select:none;white-space:nowrap}
+.dl-text{padding:2px 10px 2px 8px;white-space:pre-wrap;word-break:break-all;min-height:22px}
+/* 左右分隔线 */
+.dl-sep{width:1px;padding:0;background:#ddd}
+
+/* 行背景 — 通过 tr class 控制 */
+tr.dl-eq .dl-num{background:#bbf7d0;color:#166534}
+tr.dl-eq .dl-text{background:#f0fdf4}
+tr.dl-del .ln-l{background:#fde8e8}
+tr.dl-del .lt-l{background:#fff5f5}
+tr.dl-del .ln-r{background:#f0f0f0}
+tr.dl-del .lt-r{background:#f9f9f9}
+tr.dl-ins .ln-l{background:#f0f0f0}
+tr.dl-ins .lt-l{background:#f9f9f9}
+tr.dl-ins .ln-r{background:#bfdbfe}
+tr.dl-ins .lt-r{background:#eff6ff}
+tr.dl-chg .dl-num{background:#fef3c7}
+tr.dl-chg .dl-text{background:#fffbeb}
+tr.dl-fold td{background:#f9fafb;text-align:center;font-size:11px;color:#9ca3af;padding:3px 0;border-top:1px dashed #e5e7eb;border-bottom:1px dashed #e5e7eb}
+
+/* 字符级高亮 */
+mark.cdel{background:#fca5a5;color:#7f1d1d;border-radius:2px}
+mark.cins{background:#6ee7b7;color:#064e3b;border-radius:2px}
+
+/* 截断警告 */
+.diff-warn{padding:8px 14px;font-size:12px;color:#b45309;background:#fffbeb}
+
+/* 对比对选择器 */
+.pair-selector{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:12px}
+.pair-chip{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;border:1.5px solid #e0e0e0;background:#f9f9f9;cursor:pointer;font-size:12px;color:#555;transition:all .15s;white-space:nowrap}
+.pair-chip:hover{border-color:#7c8ffc;background:#eef0ff;color:#4f6ef7}
+.pair-chip.active{border-color:#7c8ffc;background:#7c8ffc;color:#fff}
+.pair-chip .chip-score{font-size:10px;padding:1px 6px;border-radius:10px;font-weight:700;background:rgba(0,0,0,.08)}
+.pair-chip.active .chip-score{background:rgba(255,255,255,.25)}
+
+/* 多文件上传区 */
+.dv-multi-drop{border:2px dashed #c5cae9;border-radius:8px;padding:24px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#fafbff;margin-bottom:12px}
+.dv-multi-drop:hover,.dv-multi-drop.dragover{border-color:#7c8ffc;background:#eef0ff}
+.dv-multi-drop strong{font-size:14px;color:#555}
+.dv-multi-drop p{font-size:12px;color:#999;margin-top:5px}
+</style>
+</head>
+<body>
+
+<!-- ── 侧边栏 ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="title">⚖ Bid Analysis</div>
+    <div class="sub"><span class="health-dot" id="globalDot"></span><span id="globalStatus">检查中…</span></div>
+  </div>
+  <nav class="nav">
+    <div class="nav-group">系统</div>
+    <div class="nav-item active" data-panel="health" onclick="switchPanel(this)">
+      <span class="method get">GET</span>/health
+    </div>
+
+    <div class="nav-group-toggle" onclick="toggleGroup('api-group','api-toggle')">
+      接口调试 <span class="toggle-icon" id="api-toggle">▾</span>
+    </div>
+    <div class="nav-group-body" id="api-group" style="max-height:400px">
+      <div class="nav-item" data-panel="compare-two-texts" onclick="switchPanel(this)">
+        <span class="method post">POST</span>/compare-two-texts
+      </div>
+      <div class="nav-item" data-panel="compare-texts" onclick="switchPanel(this)">
+        <span class="method post">POST</span>/compare-texts
+      </div>
+      <div class="nav-item" data-panel="compare-two-files" onclick="switchPanel(this)">
+        <span class="method post">POST</span>/compare-two-files
+      </div>
+      <div class="nav-item" data-panel="compare-files" onclick="switchPanel(this)">
+        <span class="method post">POST</span>/compare-files
+      </div>
+      <div class="nav-item" data-panel="compare-base64" onclick="switchPanel(this)">
+        <span class="method post">POST</span>/compare-base64
+      </div>
+    </div>
+
+    <div class="nav-group">功能工具</div>
+    <div class="nav-item" data-panel="diff-viewer" onclick="switchPanel(this)">
+      <span class="feat-icon">🔍</span>文件相似度对比
+    </div>
+  </nav>
+  <div class="sidebar-footer">bid-analysis-service v0.1</div>
+</aside>
+
+<!-- ── 主区域 ── -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbarTitle">GET /health</div>
+    <div class="topbar-right">
+      <div class="base-url-wrap">
+        <span>服务地址</span>
+        <input type="text" id="baseUrl" value="http://localhost:8099">
+      </div>
+      <button class="btn-health" onclick="checkHealth()">检测连通性</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- ══ 健康检查 ══ -->
+    <div class="panel active" id="panel-health">
+      <div class="panel-header">
+        <div class="panel-title"><span class="endpoint-badge get">GET</span>/health</div>
+        <div class="panel-desc">检测服务是否正常运行</div>
+      </div>
+      <div class="health-panel">
+        <div class="health-card"><div class="val" id="hc-status">—</div><div class="lbl">服务状态</div></div>
+        <div class="health-card"><div class="val" id="hc-latency">—</div><div class="lbl">响应延迟</div></div>
+        <div class="health-card"><div class="val" id="hc-time">—</div><div class="lbl">检测时间</div></div>
+      </div>
+      <div class="action-bar">
+        <button class="primary" onclick="checkHealth()">发送请求</button>
+        <span class="status-msg" id="health-status"></span>
+      </div>
+      <div style="margin-top:16px" id="health-resp-wrap" style="display:none">
+        <div class="response-wrap">
+          <div class="response-header"><span>响应</span></div>
+          <div class="response-body"><pre class="json-out" id="health-raw"></pre></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ compare-two-texts ══ -->
+    <div class="panel" id="panel-compare-two-texts">
+      <div class="panel-header">
+        <div class="panel-title"><span class="endpoint-badge post">POST</span>/analyze/compare-two-texts</div>
+        <div class="panel-desc">对比两段纯文本的相似度</div>
+      </div>
+      <div class="form-section">
+        <h3>请求体</h3>
+        <div class="form-row">
+          <div class="form-field"><label>文本 A</label><textarea id="ctt-a" rows="6" placeholder="粘贴文本 A…"></textarea></div>
+          <div class="form-field"><label>文本 B</label><textarea id="ctt-b" rows="6" placeholder="粘贴文本 B…"></textarea></div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="primary" onclick="runCompareTwoTexts()">发送请求</button>
+        <button class="secondary" onclick="loadSample('ctt')">填入示例</button>
+        <span class="status-msg" id="ctt-status"></span>
+      </div>
+      <div style="margin-top:16px" id="ctt-resp-wrap"></div>
+    </div>
+
+    <!-- ══ compare-texts ══ -->
+    <div class="panel" id="panel-compare-texts">
+      <div class="panel-header">
+        <div class="panel-title"><span class="endpoint-badge post">POST</span>/analyze/compare-texts</div>
+        <div class="panel-desc">对比多段文本（两两组合），支持传入报价进行价格模式分析</div>
+      </div>
+      <div class="form-section">
+        <h3>文本列表（每格一段）</h3>
+        <div id="ct-texts">
+          <div class="form-row"><div class="form-field"><label>文本 1</label><textarea rows="4" class="ct-text" placeholder="文本 1…"></textarea></div></div>
+          <div class="form-row"><div class="form-field"><label>文本 2</label><textarea rows="4" class="ct-text" placeholder="文本 2…"></textarea></div></div>
+        </div>
+        <button class="secondary" style="margin-top:8px;font-size:12px;padding:5px 12px" onclick="addTextField()">+ 添加文本</button>
+      </div>
+      <div class="form-section">
+        <h3>报价（可选，逗号分隔）</h3>
+        <div class="form-row"><div class="form-field"><input type="text" id="ct-prices" placeholder="例：120000, 118000, 122000"></div></div>
+      </div>
+      <div class="action-bar">
+        <button class="primary" onclick="runCompareTexts()">发送请求</button>
+        <span class="status-msg" id="ct-status"></span>
+      </div>
+      <div style="margin-top:16px" id="ct-resp-wrap"></div>
+    </div>
+
+    <!-- ══ compare-two-files ══ -->
+    <div class="panel" id="panel-compare-two-files">
+      <div class="panel-header">
+        <div class="panel-title"><span class="endpoint-badge post">POST</span>/analyze/compare-two-files</div>
+        <div class="panel-desc">上传两个文件（PDF/DOCX/DOC），对比相似度</div>
+      </div>
+      <div class="form-section">
+        <h3>文件选择</h3>
+        <div class="form-row">
+          <div class="form-field"><label>文件 A</label><input type="file" id="ctf-a" accept=".pdf,.docx,.doc" style="font-size:13px"></div>
+          <div class="form-field"><label>文件 B</label><input type="file" id="ctf-b" accept=".pdf,.docx,.doc" style="font-size:13px"></div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="primary" onclick="runCompareTwoFiles()">发送请求</button>
+        <span class="status-msg" id="ctf-status"></span>
+      </div>
+      <div style="margin-top:16px" id="ctf-resp-wrap"></div>
+    </div>
+
+    <!-- ══ compare-files ══ -->
+    <div class="panel" id="panel-compare-files">
+      <div class="panel-header">
+        <div class="panel-title"><span class="endpoint-badge post">POST</span>/analyze/compare-files</div>
+        <div class="panel-desc">上传多个文件（PDF/DOCX/DOC），两两对比</div>
+      </div>
+      <div class="form-section">
+        <h3>文件上传</h3>
+        <div class="drop-zone" id="cf-drop">
+          <strong>点击选择或拖拽文件到此处</strong>
+          <p>支持 PDF / DOCX / DOC，可多选</p>
+          <input type="file" id="cf-input" accept=".pdf,.docx,.doc" multiple style="display:none">
+        </div>
+        <div class="file-list" id="cf-list"></div>
+      </div>
+      <div class="action-bar">
+        <button class="primary" onclick="runCompareFiles()">发送请求</button>
+        <button class="secondary" onclick="cfClear()">清空</button>
+        <span class="status-msg" id="cf-status"></span>
+      </div>
+      <div style="margin-top:16px" id="cf-resp-wrap"></div>
+    </div>
+
+    <!-- ══ compare-base64 ══ -->
+    <div class="panel" id="panel-compare-base64">
+      <div class="panel-header">
+        <div class="panel-title"><span class="endpoint-badge post">POST</span>/analyze/compare-base64</div>
+        <div class="panel-desc">文件转 Base64 上传，返回识别文本预览 + 相似度对比</div>
+      </div>
+      <div class="form-section">
+        <h3>文件上传</h3>
+        <div class="drop-zone" id="cb-drop">
+          <strong>点击选择或拖拽文件到此处</strong>
+          <p>支持 PDF / DOCX / DOC，可多选</p>
+          <input type="file" id="cb-input" accept=".pdf,.docx,.doc" multiple style="display:none">
+        </div>
+        <div class="file-list" id="cb-list"></div>
+      </div>
+      <div class="form-section">
+        <h3>选项</h3>
+        <div class="form-row">
+          <div class="form-field" style="max-width:180px">
+            <label>预览字符数（0=全量）</label>
+            <input type="number" id="cb-preview" value="0" min="0">
+          </div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="primary" onclick="runCompareBase64()">发送请求</button>
+        <button class="secondary" onclick="cbClear()">清空</button>
+        <span class="status-msg" id="cb-status"></span>
+      </div>
+      <div style="margin-top:16px" id="cb-resp-wrap"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         文件相似度对比（BeyondCompare 风格，多文件）
+         ══════════════════════════════════════════════ -->
+    <div class="panel" id="panel-diff-viewer">
+      <div class="panel-header">
+        <div class="panel-title">🔍 文件相似度对比</div>
+        <div class="panel-desc">上传多个文件，自动提取文本并两两对比，高亮相同与差异内容</div>
+      </div>
+
+      <!-- 多文件上传区 -->
+      <div class="dv-multi-drop" id="dv-drop">
+        <strong>点击选择或拖拽文件到此处</strong>
+        <p>支持 PDF / DOCX / DOC，可同时选择多个文件</p>
+        <input type="file" id="dv-input" accept=".pdf,.docx,.doc" multiple style="display:none">
+      </div>
+      <div class="file-list" id="dv-file-list"></div>
+
+      <div class="action-bar" style="margin:12px 0 16px">
+        <button class="primary" id="dv-run-btn" onclick="runDiff()">开始对比</button>
+        <button class="secondary" onclick="clearDiff()">清空</button>
+        <span class="status-msg" id="dv-status"></span>
+      </div>
+
+      <!-- 对比对选择器（提取完成后显示） -->
+      <div class="pair-selector" id="dv-pairs" style="display:none"></div>
+
+      <!-- 图例 -->
+      <div class="diff-legend" id="dv-legend" style="display:none">
+        <span class="diff-legend-item"><span class="dl-dot eq"></span>相同段落</span>
+        <span class="diff-legend-item"><span class="dl-dot del"></span>仅在左侧</span>
+        <span class="diff-legend-item"><span class="dl-dot ins"></span>仅在右侧</span>
+        <span class="diff-legend-item"><span class="dl-dot chg"></span>已修改</span>
+        <span class="diff-legend-item"><span class="dl-dot cmark"></span>字符级差异</span>
+      </div>
+
+      <!-- 统计栏 -->
+      <div class="diff-stats-bar" id="dv-stats" style="display:none">
+        <div class="diff-stat"><div class="sv eq" id="dvs-eq">—</div><div class="sk">相同段</div></div>
+        <div class="diff-stat"><div class="sv del" id="dvs-del">—</div><div class="sk">仅左侧</div></div>
+        <div class="diff-stat"><div class="sv ins" id="dvs-ins">—</div><div class="sk">仅右侧</div></div>
+        <div class="diff-stat"><div class="sv chg" id="dvs-chg">—</div><div class="sk">已修改</div></div>
+        <div class="diff-stat"><div class="sv" id="dvs-sim">—</div><div class="sk">相似度</div></div>
+        <div class="diff-stat"><div class="sv" id="dvs-vis">—</div><div class="sk">视觉相似</div></div>
+      </div>
+
+      <!-- 对比视图（单表格，保证跨行对齐）-->
+      <div class="diff-view-wrap" id="dv-view" style="display:none">
+        <div class="diff-view-header">
+          <div class="diff-view-hd-cell"><span>📄</span><span class="dv-fname" id="dv-hd-a">文件 A</span></div>
+          <div class="diff-view-hd-cell"><span>📄</span><span class="dv-fname" id="dv-hd-b">文件 B</span></div>
+        </div>
+        <div class="diff-view-body">
+          <table class="diff-table">
+            <colgroup>
+              <col class="cn"><col class="ct">
+              <col style="width:1px">
+              <col class="cn"><col class="ct">
+            </colgroup>
+            <tbody id="dv-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// ══════════════════════════════════════════════════════════
+// 通用工具
+// ══════════════════════════════════════════════════════════
+function baseUrl() { return document.getElementById('baseUrl').value.replace(/\/$/, ''); }
+
+function setStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  el.className = 'status-msg ' + (type || '');
+  el.textContent = msg;
+}
+
+function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function shortName(s) { return (s || '').split('/').pop().slice(0, 28); }
+
+function switchPanel(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  const id = el.dataset.panel;
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  const methodEl = el.querySelector('.method');
+  if (methodEl) {
+    document.getElementById('topbarTitle').textContent = methodEl.textContent + ' /analyze' + methodEl.nextSibling.textContent;
+  } else {
+    const txt = el.querySelector('.feat-icon') ? el.textContent.trim() : el.textContent.trim();
+    document.getElementById('topbarTitle').textContent = txt;
+  }
+  if (id === 'health') document.getElementById('topbarTitle').textContent = 'GET /health';
+}
+
+function toggleGroup(bodyId, iconId) {
+  const body = document.getElementById(bodyId);
+  const icon = document.getElementById(iconId);
+  const collapsed = body.classList.toggle('collapsed');
+  icon.style.transform = collapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+}
+
+async function apiFetch(path, opts) {
+  const t0 = performance.now();
+  const resp = await fetch(baseUrl() + path, opts);
+  const ms = performance.now() - t0;
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+  return { data: await resp.json(), ms };
+}
+
+// ══════════════════════════════════════════════════════════
+// 结果渲染
+// ══════════════════════════════════════════════════════════
+function riskBadge(cosine, difflib, longest) {
+  const s = cosine * 0.5 + difflib * 0.3 + (longest > 500 ? 0.2 : longest > 100 ? 0.1 : 0);
+  if (s > 0.85) return '<span class="badge high">高风险</span>';
+  if (s > 0.5)  return '<span class="badge medium">中风险</span>';
+  return '<span class="badge low">低风险</span>';
+}
+
+function bar(val) {
+  const pct = Math.round((val || 0) * 100);
+  return `<div style="font-size:12px">${pct}%</div><div class="bar-wrap"><div class="bar" style="width:${pct}%"></div></div>`;
+}
+
+function overall_risk_js(comparisons) {
+  const valid = comparisons.filter(c => c.result && c.result.ok);
+  if (!valid.length) return { riskLevel: 'unknown' };
+  const score = c => {
+    const r = c.result;
+    const t = parseFloat(r.tfidfCosine||0), d = parseFloat(r.difflibRatio||0), l = parseInt(r.longestCommonRunChars||0);
+    return t*0.5 + d*0.3 + (l>500?0.2:l>100?0.1:0);
+  };
+  const worst = valid.reduce((a,b) => score(a)>=score(b)?a:b);
+  const s = score(worst); const r = worst.result;
+  const level = s>0.85?'high':s>0.5?'medium':'low';
+  const labels = {high:'高风险 · 疑似围标', medium:'中风险 · 建议人工复核', low:'低风险 · 未发现明显异常'};
+  return { riskLevel:level, riskLabel:labels[level], worstPairA:worst.a||worst.i, worstPairB:worst.b||worst.j,
+    maxTfidfCosine:parseFloat(r.tfidfCosine||0), maxDifflibRatio:parseFloat(r.difflibRatio||0),
+    maxLongestCommonRunChars:parseInt(r.longestCommonRunChars||0), 'maxCommonBlocksCount500+':parseInt(r['commonBlocksCount500+']||0) };
+}
+
+function renderSummaryCard(summary) {
+  if (!summary || summary.riskLevel === 'unknown') return '';
+  const icons = { high: '🚨', medium: '⚠️', low: '✅' };
+  const icon = icons[summary.riskLevel] || '❓';
+  const worst = (summary.worstPairA && summary.worstPairB)
+    ? `<div class="summary-worst">最可疑对比：<strong>${shortName(summary.worstPairA)}</strong> vs <strong>${shortName(summary.worstPairB)}</strong></div>`
+    : '';
+  return `<div class="summary-card ${summary.riskLevel}">
+    <div class="summary-icon">${icon}</div>
+    <div class="summary-main">
+      <div class="summary-label">${summary.riskLabel || summary.riskLevel}</div>
+      <div class="summary-meta">
+        <span>TF-IDF 余弦 <strong>${((summary.maxTfidfCosine||0)*100).toFixed(1)}%</strong></span>
+        <span>Difflib 比率 <strong>${((summary.maxDifflibRatio||0)*100).toFixed(1)}%</strong></span>
+        <span>最长公共块 <strong>${summary.maxLongestCommonRunChars||0} 字</strong></span>
+        <span>500+大段块 <strong>${summary['maxCommonBlocksCount500+']||0} 个</strong></span>
+      </div>
+      ${worst}
+    </div>
+  </div>`;
+}
+
+function renderCompareTable(comparisons) {
+  if (!comparisons || !comparisons.length) return '<div class="empty-state">无对比结果</div>';
+  const rows = comparisons.map(c => {
+    const r = c.result || {};
+    const v = c.visualSimilarity || {};
+    const cosine = parseFloat(r.tfidfCosine || 0);
+    const difflib = parseFloat(r.difflibRatio || 0);
+    const longest = r.longestCommonRunChars || 0;
+    const na = c.a || (c.i !== undefined ? `文本${c.i}` : '?');
+    const nb = c.b || (c.j !== undefined ? `文本${c.j}` : '?');
+    const visualCell = v.ok
+      ? `${bar(v.avgPageSim)}<small style="color:#888">${v.highSimPages}/${v.totalPagesA}页高似</small>`
+      : '<span style="color:#bbb;font-size:12px">—</span>';
+    return `<tr>
+      <td>${shortName(na)}</td><td>${shortName(nb)}</td>
+      <td>${bar(cosine)}</td><td>${bar(difflib)}</td>
+      <td>${visualCell}</td>
+      <td style="font-weight:600">${longest}</td>
+      <td>${r['matchingSegments50+'] || 0}</td>
+      <td>${r['commonBlocksCount500+'] || 0}</td>
+      <td>${riskBadge(cosine, difflib, longest)}</td>
+    </tr>`;
+  }).join('');
+  return `<table class="result-table">
+    <thead><tr>
+      <th>文件 A</th><th>文件 B</th>
+      <th>TF-IDF 余弦<br><small style="font-weight:normal;color:#aaa">主题相似度</small></th>
+      <th>Difflib 比率<br><small style="font-weight:normal;color:#aaa">字面相似度</small></th>
+      <th>视觉相似度<br><small style="font-weight:normal;color:#aaa">页面 pHash</small></th>
+      <th>最长公共块<br><small style="font-weight:normal;color:#aaa">连续相同字符数</small></th>
+      <th>50+片段数<br><small style="font-weight:normal;color:#aaa">≥50字段落数</small></th>
+      <th>500+块数<br><small style="font-weight:normal;color:#aaa">≥500字块数</small></th>
+      <th>风险</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function renderResponse(wrapId, data, extraHtml) {
+  const json = JSON.stringify(data, null, 2);
+  document.getElementById(wrapId).innerHTML = `
+    <div class="response-wrap">
+      <div class="response-header">
+        <span>响应</span>
+        <div class="response-tabs">
+          <div class="response-tab active" onclick="switchRespTab(this,'${wrapId}','visual')">可视化</div>
+          <div class="response-tab" onclick="switchRespTab(this,'${wrapId}','raw')">原始 JSON</div>
+        </div>
+      </div>
+      <div class="response-body">
+        <div class="response-pane active" id="${wrapId}-visual">${extraHtml || '<div class="empty-state">无可视化内容</div>'}</div>
+        <div class="response-pane" id="${wrapId}-raw"><pre class="json-out">${escHtml(json)}</pre></div>
+      </div>
+    </div>`;
+}
+
+function switchRespTab(el, wrapId, pane) {
+  el.closest('.response-tabs').querySelectorAll('.response-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(wrapId + '-visual').classList.toggle('active', pane === 'visual');
+  document.getElementById(wrapId + '-raw').classList.toggle('active', pane === 'raw');
+}
+
+// ══════════════════════════════════════════════════════════
+// /health
+// ══════════════════════════════════════════════════════════
+async function checkHealth() {
+  setStatus('health-status', '检测中…', 'loading');
+  try {
+    const { data, ms } = await apiFetch('/health', {});
+    document.getElementById('hc-status').textContent = data.ok ? '✓ 正常' : '✗ 异常';
+    document.getElementById('hc-latency').textContent = ms.toFixed(0) + ' ms';
+    document.getElementById('hc-time').textContent = new Date().toLocaleTimeString();
+    const dot = document.getElementById('globalDot');
+    dot.className = 'health-dot ' + (data.ok ? 'ok' : 'err');
+    document.getElementById('globalStatus').textContent = data.ok ? '服务正常' : '服务异常';
+    setStatus('health-status', '请求成功', 'success');
+    document.getElementById('health-raw').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('health-resp-wrap').style.display = 'block';
+  } catch (e) {
+    setStatus('health-status', '请求失败：' + e.message, 'error');
+    document.getElementById('globalDot').className = 'health-dot err';
+    document.getElementById('globalStatus').textContent = '连接失败';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// compare-two-texts
+// ══════════════════════════════════════════════════════════
+async function runCompareTwoTexts() {
+  const a = document.getElementById('ctt-a').value.trim();
+  const b = document.getElementById('ctt-b').value.trim();
+  if (!a || !b) { setStatus('ctt-status', '请填写两段文本', 'error'); return; }
+  setStatus('ctt-status', '请求中…', 'loading');
+  try {
+    const { data, ms } = await apiFetch('/analyze/compare-two-texts', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ a, b })
+    });
+    setStatus('ctt-status', `完成 · ${ms.toFixed(0)} ms`, 'success');
+    const cttComps = [{ a:'文本A', b:'文本B', result: data.result }];
+    renderResponse('ctt-resp-wrap', data, renderSummaryCard(data.summary || overall_risk_js(cttComps)) + renderCompareTable(cttComps));
+  } catch (e) { setStatus('ctt-status', '请求失败：' + e.message, 'error'); }
+}
+
+function loadSample(prefix) {
+  document.getElementById(prefix + '-a').value = '本项目要求供应商提供7×24小时技术支持服务，响应时间不超过2小时，现场处理时间不超过4小时。维保期内提供免费升级服务。';
+  document.getElementById(prefix + '-b').value = '供应商须提供7×24小时技术支持，响应时间不超过2小时，现场处理时间不超过4小时。维保期内提供免费升级服务，数据保留不低于3年。';
+}
+
+// ══════════════════════════════════════════════════════════
+// compare-texts
+// ══════════════════════════════════════════════════════════
+function addTextField() {
+  const container = document.getElementById('ct-texts');
+  const n = container.querySelectorAll('.ct-text').length + 1;
+  const div = document.createElement('div');
+  div.className = 'form-row';
+  div.innerHTML = `<div class="form-field"><label>文本 ${n}</label><textarea rows="4" class="ct-text" placeholder="文本 ${n}…"></textarea></div>`;
+  container.appendChild(div);
+}
+
+async function runCompareTexts() {
+  const texts = [...document.querySelectorAll('.ct-text')].map(t => t.value.trim()).filter(Boolean);
+  if (texts.length < 2) { setStatus('ct-status', '至少填写 2 段文本', 'error'); return; }
+  const pricesRaw = document.getElementById('ct-prices').value.trim();
+  const prices = pricesRaw ? pricesRaw.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n)) : null;
+  setStatus('ct-status', '请求中…', 'loading');
+  try {
+    const body = { texts };
+    if (prices && prices.length) body.prices = prices;
+    const { data, ms } = await apiFetch('/analyze/compare-texts', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    setStatus('ct-status', `完成 · ${ms.toFixed(0)} ms`, 'success');
+    let visual = renderSummaryCard(data.summary) + renderCompareTable(data.comparisons);
+    if (data.pricePatterns) {
+      visual += `<div style="padding:14px 16px;font-size:13px;border-top:1px solid #eee"><strong>价格模式：</strong><pre style="margin-top:6px;font-size:12px;color:#555">${escHtml(JSON.stringify(data.pricePatterns, null, 2))}</pre></div>`;
+    }
+    renderResponse('ct-resp-wrap', data, visual);
+  } catch (e) { setStatus('ct-status', '请求失败：' + e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════════════
+// compare-two-files
+// ══════════════════════════════════════════════════════════
+async function runCompareTwoFiles() {
+  const fa = document.getElementById('ctf-a').files[0];
+  const fb = document.getElementById('ctf-b').files[0];
+  if (!fa || !fb) { setStatus('ctf-status', '请选择两个文件', 'error'); return; }
+  setStatus('ctf-status', '上传识别中，请稍候…', 'loading');
+  try {
+    const form = new FormData();
+    form.append('a', fa); form.append('b', fb);
+    const { data, ms } = await apiFetch('/analyze/compare-two-files', { method: 'POST', body: form });
+    setStatus('ctf-status', `完成 · ${ms.toFixed(0)} ms`, 'success');
+    const ctfComps = [{ a: data.a, b: data.b, result: data.result }];
+    renderResponse('ctf-resp-wrap', data, renderSummaryCard(data.summary) + renderCompareTable(ctfComps));
+  } catch (e) { setStatus('ctf-status', '请求失败：' + e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════════════
+// compare-files
+// ══════════════════════════════════════════════════════════
+let cfFiles = [];
+(function(){
+  const drop = document.getElementById('cf-drop'), inp = document.getElementById('cf-input');
+  drop.onclick = () => inp.click();
+  inp.onchange = e => cfAdd([...e.target.files]);
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add('dragover'); };
+  drop.ondragleave = () => drop.classList.remove('dragover');
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove('dragover'); cfAdd([...e.dataTransfer.files]); };
+})();
+function cfAdd(files) {
+  files.forEach(f => { if (!cfFiles.find(x => x.name === f.name)) cfFiles.push(f); });
+  cfRender();
+}
+function cfRender() {
+  document.getElementById('cf-list').innerHTML = cfFiles.map((f,i) =>
+    `<div class="file-tag">📄 ${f.name} <span class="rm" onclick="cfFiles.splice(${i},1);cfRender()">✕</span></div>`).join('');
+}
+function cfClear() { cfFiles = []; cfRender(); }
+async function runCompareFiles() {
+  if (cfFiles.length < 2) { setStatus('cf-status', '至少选择 2 个文件', 'error'); return; }
+  setStatus('cf-status', '上传识别中，请稍候…', 'loading');
+  try {
+    const form = new FormData();
+    cfFiles.forEach(f => form.append('files', f));
+    const { data, ms } = await apiFetch('/analyze/compare-files', { method: 'POST', body: form });
+    setStatus('cf-status', `完成 · ${ms.toFixed(0)} ms`, 'success');
+    renderResponse('cf-resp-wrap', data, renderSummaryCard(data.summary) + renderCompareTable(data.comparisons));
+  } catch (e) { setStatus('cf-status', '请求失败：' + e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════════════
+// compare-base64
+// ══════════════════════════════════════════════════════════
+let cbFiles = [];
+(function(){
+  const drop = document.getElementById('cb-drop'), inp = document.getElementById('cb-input');
+  drop.onclick = () => inp.click();
+  inp.onchange = e => cbAdd([...e.target.files]);
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add('dragover'); };
+  drop.ondragleave = () => drop.classList.remove('dragover');
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove('dragover'); cbAdd([...e.dataTransfer.files]); };
+})();
+function cbAdd(files) {
+  files.forEach(f => { if (!cbFiles.find(x => x.name === f.name)) cbFiles.push(f); });
+  cbRender();
+}
+function cbRender() {
+  document.getElementById('cb-list').innerHTML = cbFiles.map((f,i) =>
+    `<div class="file-tag">📄 ${f.name} <span class="rm" onclick="cbFiles.splice(${i},1);cbRender()">✕</span></div>`).join('');
+}
+function cbClear() { cbFiles = []; cbRender(); }
+async function runCompareBase64() {
+  if (cbFiles.length < 2) { setStatus('cb-status', '至少选择 2 个文件', 'error'); return; }
+  setStatus('cb-status', '读取 & 识别中，请稍候…', 'loading');
+  try {
+    const previewChars = parseInt(document.getElementById('cb-preview').value) || 0;
+    const files = await Promise.all(cbFiles.map(async f => ({ filename: f.name, content_b64: await toBase64(f) })));
+    const { data, ms } = await apiFetch('/analyze/compare-base64', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ files, include_text_preview: true, preview_chars: previewChars })
+    });
+    setStatus('cb-status', `完成 · ${ms.toFixed(0)} ms · ${files.length} 个文件`, 'success');
+    const previews = (data.fileMetas || []).map(m =>
+      `<div class="text-preview-block">
+        <div class="text-preview-hd" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+          <span class="fname">📄 ${m.name}</span>
+          <span class="fmeta">${(m.sizeBytes/1024).toFixed(0)} KB · ${m.textLen} 字 · ${m.sha256?.slice(0,10)}…</span>
+        </div>
+        <div class="text-preview-bd">${escHtml((m.textPreview || '（无文字）').trim())}</div>
+      </div>`).join('');
+    renderResponse('cb-resp-wrap', data, renderSummaryCard(data.summary) + previews + renderCompareTable(data.comparisons));
+  } catch (e) { setStatus('cb-status', '请求失败：' + e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════════════
+// 文件相似度对比（Diff Viewer，多文件）
+// ══════════════════════════════════════════════════════════
+let dvFiles = [];          // File[]
+let dvTexts = [];          // 提取的文本
+let dvNames = [];          // 文件名
+let dvPairScores = {};     // "i-j" -> tfidfCosine（来自 API）
+let dvPairVisual = {};     // "i-j" -> visualSimilarity object（来自 API）
+let dvActivePair = null;   // [i, j]
+
+(function(){
+  const drop = document.getElementById('dv-drop');
+  const inp  = document.getElementById('dv-input');
+  drop.onclick = () => inp.click();
+  inp.onchange = e => dvAddFiles([...e.target.files]);
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add('dragover'); };
+  drop.ondragleave = () => drop.classList.remove('dragover');
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove('dragover'); dvAddFiles([...e.dataTransfer.files]); };
+})();
+
+function dvAddFiles(files) {
+  files.forEach(f => { if (!dvFiles.find(x => x.name === f.name)) dvFiles.push(f); });
+  dvRenderFileList();
+}
+
+function dvRenderFileList() {
+  document.getElementById('dv-file-list').innerHTML = dvFiles.map((f, i) =>
+    `<div class="file-tag">📄 ${escHtml(f.name)}
+      <span class="rm" onclick="dvFiles.splice(${i},1);dvRenderFileList()">✕</span>
+    </div>`).join('');
+}
+
+function clearDiff() {
+  dvFiles = []; dvTexts = []; dvNames = []; dvPairScores = {}; dvPairVisual = {}; dvActivePair = null;
+  dvRenderFileList();
+  document.getElementById('dv-input').value = '';
+  document.getElementById('dv-pairs').style.display = 'none';
+  document.getElementById('dv-legend').style.display = 'none';
+  document.getElementById('dv-stats').style.display = 'none';
+  document.getElementById('dv-view').style.display = 'none';
+  setStatus('dv-status', '', '');
+}
+
+async function runDiff() {
+  if (dvFiles.length < 2) { setStatus('dv-status', '请至少选择 2 个文件', 'error'); return; }
+  setStatus('dv-status', `正在提取 ${dvFiles.length} 个文件的文本，请稍候…`, 'loading');
+  document.getElementById('dv-run-btn').disabled = true;
+
+  // 隐藏旧结果
+  document.getElementById('dv-pairs').style.display = 'none';
+  document.getElementById('dv-legend').style.display = 'none';
+  document.getElementById('dv-stats').style.display = 'none';
+  document.getElementById('dv-view').style.display = 'none';
+
+  try {
+    const b64List = await Promise.all(dvFiles.map(f => toBase64(f)));
+    const apiFiles = dvFiles.map((f, i) => ({ filename: f.name, content_b64: b64List[i] }));
+
+    const { data, ms } = await apiFetch('/analyze/compare-base64', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ files: apiFiles, include_text_preview: true, preview_chars: 0 })
+    });
+
+    dvNames = (data.fileMetas || []).map(m => m.name);
+    dvTexts = (data.fileMetas || []).map(m => m.textPreview || '');
+
+    // 缓存 API 返回的相似度分数（用于 chip badge）
+    dvPairScores = {};
+    dvPairVisual = {};
+    (data.comparisons || []).forEach(c => {
+      const i = dvNames.indexOf(c.a), j = dvNames.indexOf(c.b);
+      if (i >= 0 && j >= 0) {
+        dvPairScores[`${i}-${j}`] = parseFloat(c.result?.tfidfCosine || 0);
+        dvPairVisual[`${i}-${j}`] = c.visualSimilarity || null;
+      }
+    });
+
+    setStatus('dv-status', `文本提取完成 · ${ms.toFixed(0)} ms · ${dvFiles.length} 个文件`, 'success');
+
+    // 渲染对比对选择器
+    renderPairSelector();
+
+    // 自动选中第一对
+    await dvSelectPair(0, 1);
+
+  } catch(e) {
+    setStatus('dv-status', '失败：' + e.message, 'error');
+  } finally {
+    document.getElementById('dv-run-btn').disabled = false;
+  }
+}
+
+function renderPairSelector() {
+  const n = dvNames.length;
+  let html = '';
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const score = dvPairScores[`${i}-${j}`] ?? dvPairScores[`${j}-${i}`] ?? null;
+      const tpct = score !== null ? Math.round(score * 100) : '?';
+      const scoreClass = score > 0.85 ? 'style="color:#dc2626"' : score > 0.5 ? 'style="color:#d97706"' : 'style="color:#16a34a"';
+      const vis = dvPairVisual[`${i}-${j}`] ?? dvPairVisual[`${j}-${i}`] ?? null;
+      const vpct = vis?.ok ? Math.round(vis.avgPageSim * 100) : null;
+      const vBadge = vpct !== null
+        ? `<span class="chip-score" style="color:#6366f1">视觉${vpct}%</span>`
+        : '';
+      html += `<div class="pair-chip" id="chip-${i}-${j}" onclick="dvSelectPair(${i},${j})">
+        <span>${shortName(dvNames[i])} vs ${shortName(dvNames[j])}</span>
+        <span class="chip-score" ${scoreClass}>文本${tpct}%</span>${vBadge}
+      </div>`;
+    }
+  }
+  const el = document.getElementById('dv-pairs');
+  el.innerHTML = html;
+  el.style.display = 'flex';
+}
+
+async function dvSelectPair(i, j) {
+  dvActivePair = [i, j];
+
+  // 更新 chip 高亮
+  document.querySelectorAll('.pair-chip').forEach(c => c.classList.remove('active'));
+  const chip = document.getElementById(`chip-${i}-${j}`);
+  if (chip) chip.classList.add('active');
+
+  await new Promise(r => setTimeout(r, 20)); // 让浏览器渲染高亮
+  renderDiffView(dvNames[i], dvNames[j], dvTexts[i], dvTexts[j]);
+  const vis = dvPairVisual[`${i}-${j}`] ?? dvPairVisual[`${j}-${i}`] ?? null;
+  const dvVisEl = document.getElementById('dvs-vis');
+  if (dvVisEl) dvVisEl.textContent = vis?.ok ? Math.round(vis.avgPageSim * 100) + '%' : '—';
+}
+
+// ── Diff 算法 ────────────────────────────────────────────
+
+/**
+ * 将文本分割为段落列表（非空行）
+ */
+function splitSegments(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  if (lines.length > 2000) lines.splice(2000);
+  return lines;
+}
+
+/**
+ * LCS DP 矩阵（返回二维 Int32Array）
+ */
+function lcsDP(a, b) {
+  const m = a.length, n = b.length;
+  // 使用 flat array 节省内存
+  const dp = new Int32Array((m+1) * (n+1));
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i*(n+1)+j] = a[i-1] === b[j-1]
+        ? dp[(i-1)*(n+1)+(j-1)] + 1
+        : Math.max(dp[(i-1)*(n+1)+j], dp[i*(n+1)+(j-1)]);
+    }
+  }
+  return { dp, n };
+}
+
+/**
+ * 段落级 diff。返回 [{type, aLine, bLine}]
+ * type: 'equal' | 'delete' | 'insert' | 'change'
+ */
+function computeLineDiff(seqA, seqB) {
+  const m = seqA.length, n = seqB.length;
+
+  // 太大则跳过 LCS，直接对齐
+  if (m * n > 3_000_000) {
+    const result = [];
+    const len = Math.max(m, n);
+    for (let i = 0; i < len; i++) {
+      const a = i < m ? seqA[i] : null;
+      const b = i < n ? seqB[i] : null;
+      if (a !== null && b !== null) result.push({type: 'change', aLine: a, bLine: b});
+      else if (a !== null) result.push({type: 'delete', aLine: a, bLine: null});
+      else result.push({type: 'insert', aLine: null, bLine: b});
+    }
+    return result;
+  }
+
+  const { dp, n: N } = lcsDP(seqA, seqB);
+
+  // 回溯
+  const raw = [];
+  let i = m, j = n;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && seqA[i-1] === seqB[j-1]) {
+      raw.push({type: 'equal', aLine: seqA[i-1], bLine: seqB[j-1]});
+      i--; j--;
+    } else if (j > 0 && (i === 0 || dp[i*(N+1)+(j-1)] >= dp[(i-1)*(N+1)+j])) {
+      raw.push({type: 'insert', aLine: null, bLine: seqB[j-1]});
+      j--;
+    } else {
+      raw.push({type: 'delete', aLine: seqA[i-1], bLine: null});
+      i--;
+    }
+  }
+  raw.reverse();
+
+  // 合并相邻 delete+insert → change
+  const result = [];
+  let k = 0;
+  while (k < raw.length) {
+    if (raw[k].type !== 'delete') { result.push(raw[k++]); continue; }
+    const dels = [], ins = [];
+    while (k < raw.length && raw[k].type === 'delete') dels.push(raw[k++].aLine);
+    while (k < raw.length && raw[k].type === 'insert') ins.push(raw[k++].bLine);
+    const len = Math.max(dels.length, ins.length);
+    for (let x = 0; x < len; x++) {
+      const a = x < dels.length ? dels[x] : null;
+      const b = x < ins.length ? ins[x]  : null;
+      if (a !== null && b !== null) result.push({type: 'change', aLine: a, bLine: b});
+      else if (a !== null)          result.push({type: 'delete', aLine: a, bLine: null});
+      else                          result.push({type: 'insert', aLine: null, bLine: b});
+    }
+  }
+  return result;
+}
+
+/**
+ * 字符级 diff（用于 change 行，高亮具体改动字符）
+ */
+function charDiff(strA, strB) {
+  if (strA.length + strB.length > 600) {
+    // 太长：直接整行标黄
+    return { aHtml: `<mark class="cdel">${escHtml(strA)}</mark>`, bHtml: `<mark class="cins">${escHtml(strB)}</mark>` };
+  }
+  const ac = [...strA], bc = [...strB];
+  const m = ac.length, n = bc.length;
+  const dp = new Int32Array((m+1)*(n+1));
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i*(n+1)+j] = ac[i-1] === bc[j-1] ? dp[(i-1)*(n+1)+(j-1)]+1 : Math.max(dp[(i-1)*(n+1)+j], dp[i*(n+1)+(j-1)]);
+
+  const aOps = [], bOps = [];
+  let i = m, j = n;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && ac[i-1] === bc[j-1]) {
+      aOps.push({t:'eq',c:ac[i-1]}); bOps.push({t:'eq',c:bc[j-1]}); i--; j--;
+    } else if (j > 0 && (i === 0 || dp[i*(n+1)+(j-1)] >= dp[(i-1)*(n+1)+j])) {
+      bOps.push({t:'ins',c:bc[j-1]}); j--;
+    } else {
+      aOps.push({t:'del',c:ac[i-1]}); i--;
+    }
+  }
+  aOps.reverse(); bOps.reverse();
+
+  const build = (ops, delCls, insCls) => {
+    let html = '', cur = null;
+    for (const op of ops) {
+      const cls = op.t === 'eq' ? null : op.t === 'del' ? delCls : insCls;
+      if (cls !== cur) { if (cur) html += '</mark>'; if (cls) html += `<mark class="${cls}">`; cur = cls; }
+      html += escHtml(op.c);
+    }
+    if (cur) html += '</mark>';
+    return html;
+  };
+  return { aHtml: build(aOps, 'cdel', null), bHtml: build(bOps, null, 'cins') };
+}
+
+// ── 渲染 ─────────────────────────────────────────────────
+
+/**
+ * 构建一个 <tr>，左右各一格，5列：num-l | text-l | sep | num-r | text-r
+ */
+function makeRow(type, lnA, lnB, leftHtml, rightHtml) {
+  const la = lnA !== null ? lnA : '';
+  const lb = lnB !== null ? lnB : '';
+  // type 决定 tr class，从而驱动 CSS 颜色
+  const numClsL = type === 'del' ? 'dl-num ln-l' : type === 'ins' ? 'dl-num ln-l' : 'dl-num';
+  const txtClsL = type === 'del' ? 'dl-text lt-l' : type === 'ins' ? 'dl-text lt-l' : 'dl-text';
+  const numClsR = type === 'del' ? 'dl-num ln-r' : type === 'ins' ? 'dl-num ln-r' : 'dl-num';
+  const txtClsR = type === 'del' ? 'dl-text lt-r' : type === 'ins' ? 'dl-text lt-r' : 'dl-text';
+  return `<tr class="dl-${type}">
+    <td class="${numClsL}">${la}</td>
+    <td class="${txtClsL}">${leftHtml}</td>
+    <td class="dl-sep"></td>
+    <td class="${numClsR}">${lb}</td>
+    <td class="${txtClsR}">${rightHtml}</td>
+  </tr>`;
+}
+
+
+function renderDiffView(nameA, nameB, textA, textB) {
+  const seqA = splitSegments(textA);
+  const seqB = splitSegments(textB);
+  const truncated = seqA.length >= 2000 || seqB.length >= 2000;
+
+  const ops = computeLineDiff(seqA, seqB);
+
+  // 统计
+  let cntEq = 0, cntDel = 0, cntIns = 0, cntChg = 0;
+  ops.forEach(o => {
+    if (o.type === 'equal') cntEq++;
+    else if (o.type === 'delete') cntDel++;
+    else if (o.type === 'insert') cntIns++;
+    else cntChg++;
+  });
+  const total = cntEq + cntDel + cntIns + cntChg;
+  const sim = total > 0 ? ((cntEq / total) * 100).toFixed(1) : '0.0';
+
+  document.getElementById('dvs-eq').textContent  = cntEq;
+  document.getElementById('dvs-del').textContent = cntDel;
+  document.getElementById('dvs-ins').textContent = cntIns;
+  document.getElementById('dvs-chg').textContent = cntChg;
+  document.getElementById('dvs-sim').textContent = sim + '%';
+  document.getElementById('dv-hd-a').textContent = nameA;
+  document.getElementById('dv-hd-b').textContent = nameB;
+
+  // 构建 table rows（单字符串，天然对齐）
+  let rows = '';
+  let lnA = 1, lnB = 1;
+
+  const flushEqRun = (buf, startA, startB) => {
+    buf.forEach((o, ri) => {
+      rows += makeRow('eq', startA + ri, startB + ri, escHtml(o.aLine), escHtml(o.bLine));
+    });
+  };
+
+  let eqBuf = [], eqBufLnA = 1, eqBufLnB = 1;
+  const flushEq = () => {
+    if (eqBuf.length > 0) { flushEqRun(eqBuf, eqBufLnA, eqBufLnB); eqBuf = []; }
+  };
+
+  for (const op of ops) {
+    if (op.type === 'equal') {
+      if (eqBuf.length === 0) { eqBufLnA = lnA; eqBufLnB = lnB; }
+      eqBuf.push(op);
+      lnA++; lnB++;
+    } else {
+      flushEq();
+      if (op.type === 'delete') {
+        rows += makeRow('del', lnA, null, escHtml(op.aLine), '');
+        lnA++;
+      } else if (op.type === 'insert') {
+        rows += makeRow('ins', null, lnB, '', escHtml(op.bLine));
+        lnB++;
+      } else { // change
+        const {aHtml, bHtml} = charDiff(op.aLine, op.bLine);
+        rows += makeRow('chg', lnA, lnB, aHtml, bHtml);
+        lnA++; lnB++;
+      }
+    }
+  }
+  flushEq();
+
+  if (truncated) {
+    rows = `<tr><td colspan="5" class="diff-warn">⚠ 文本超过 2000 段，已截断显示</td></tr>` + rows;
+  }
+
+  document.getElementById('dv-body').innerHTML = rows;
+
+  // 显示各区块
+  document.getElementById('dv-legend').style.display = '';
+  document.getElementById('dv-stats').style.display  = '';
+  document.getElementById('dv-view').style.display   = '';
+}
+
+// ══════════════════════════════════════════════════════════
+// 初始化
+// ══════════════════════════════════════════════════════════
+checkHealth();
+</script>
+</body>
+</html>

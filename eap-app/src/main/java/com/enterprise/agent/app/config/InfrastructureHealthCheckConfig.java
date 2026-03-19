@@ -22,7 +22,7 @@ public class InfrastructureHealthCheckConfig implements ApplicationListener<Appl
 
     private final RedisConnectionFactory redisConnectionFactory;
 
-    @Value("${spring.kafka.bootstrap-servers}")
+    @Value("${spring.kafka.bootstrap-servers:}")
     private String kafkaBootstrapServers;
 
     public InfrastructureHealthCheckConfig(RedisConnectionFactory redisConnectionFactory) {
@@ -50,6 +50,10 @@ public class InfrastructureHealthCheckConfig implements ApplicationListener<Appl
     }
 
     private void checkKafka() {
+        if (kafkaBootstrapServers == null || kafkaBootstrapServers.isBlank()) {
+            log.warn("[HealthCheck] 未配置 spring.kafka.bootstrap-servers，跳过 Kafka 连通性检测");
+            return;
+        }
         log.info("[HealthCheck] 检测 Kafka 连通性...");
         Map<String, Object> config = Map.of(
                 AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServers,

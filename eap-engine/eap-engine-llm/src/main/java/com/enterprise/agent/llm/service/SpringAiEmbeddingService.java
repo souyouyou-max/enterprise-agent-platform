@@ -5,6 +5,7 @@ import com.enterprise.agent.common.ai.model.EmbeddingResponse;
 import com.enterprise.agent.common.ai.service.EmbeddingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class SpringAiEmbeddingService implements EmbeddingService {
 
     private final EmbeddingModel embeddingModel;
 
-    public SpringAiEmbeddingService(EmbeddingModel embeddingModel) {
+    public SpringAiEmbeddingService(@Qualifier("openAiEmbeddingModel") EmbeddingModel embeddingModel) {
         this.embeddingModel = embeddingModel;
     }
 

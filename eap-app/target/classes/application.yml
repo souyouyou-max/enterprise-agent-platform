@@ -3,16 +3,125 @@ server:
   servlet:
     context-path: /
 
-# 服务注册（公共配置已由 Nacos common.yml 提供，此处仅保留注册中心连接）
 spring:
+  application:
+    name: eap-app
+
+  # 当前不用 Nacos，关闭服务发现与注册，避免 401 导致启动失败
   cloud:
     nacos:
       discovery:
-        server-addr: ${NACOS_ADDR:localhost:8848}
-        enabled: ${NACOS_ENABLED:true}
-        username: ${NACOS_USERNAME:nacos}
-        password: ${NACOS_PASSWORD:nacos}
-        fail-fast: true
+        enabled: false
+
+  # 数据库（原 Nacos common.yml）
+  datasource:
+    url: jdbc:oceanbase:oracle://${DB_HOST:localhost}:${DB_PORT:2883}/AIPTEST?useSSL=false
+    username: ${DB_USERNAME:eap_user}
+    password: ${DB_PASSWORD:eap_password}
+    driver-class-name: com.oceanbase.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      initialization-fail-timeout: 1
+
+  # Redis
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 10000ms
+      connect-timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 0
+
+  # Kafka
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+    consumer:
+      group-id: eap-app-consumer-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "com.enterprise.agent.*"
+
+  # AI 模型（原 Nacos common.yml）
+  ai:
+    openai:
+      api-key: sk-ZoXZvFwOV1btns8vZWNPvnc8NnsD3mvBmsHGFjis8TXEq83d
+      base-url: http://10.8.192.80:17500/ability/gpt
+      chat:
+        options:
+          model: qwen3-32b-com
+          temperature: 0.7
+        completions-path: /v2/chat/completions
+    chat:
+      observations:
+        include-error-logging: true
+        log-prompt: true
+        log-completion: true
+
+# MyBatis-Plus（原 Nacos common.yml）
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+# 应用级配置（minio/security 使用 eap 前缀，与代码一致）
+eap:
+  llm:
+    provider: openai
+  tools:
+    zhengyan:
+      platform:
+        enabled: true
+        timeout-ms: 20000
+        # 通用 Header（两个接口共用）
+        authorization: Bearer sk-NCq0CBb7uz4Fuw5Nax9ThkjNWvDIPmLrgr7P5ajjQGDe3bgA
+        app-id: ${ZHENGYAN_APP_ID:G209-test}
+        # img2text 可选模型类型: AzureGPT-4o / AzureGPT4-turbo-vision
+        default-model-type: qwen2-5-vl-72b-com
+        endpoints:
+          img2text: http://10.8.192.80:17500/ability/multimodal/v2/img2text
+          professional-qa: ${ZHENGYAN_PROFESSIONAL_QA_ENDPOINT:https://zhengyan.sinosig.com/ai/ability/professional/v1/qa}
+      text-classification:
+        enabled: false
+        # 正言语义文本分类接口地址（按实际文档填写）
+        endpoint: ${ZHENGYAN_TEXT_CLASSIFICATION_ENDPOINT:}
+        timeout-ms: 15000
+        # 鉴权配置：默认 Authorization: Bearer <api-key>
+        auth-header: ${ZHENGYAN_AUTH_HEADER:Authorization}
+        auth-prefix: ${ZHENGYAN_AUTH_PREFIX:Bearer }
+        api-key: ${ZHENGYAN_API_KEY:}
+        # 若接口要求应用ID，可配置为对应 header（默认 X-App-Id）
+        app-id: ${ZHENGYAN_APP_ID:}
+        app-id-header: ${ZHENGYAN_APP_ID_HEADER:X-App-Id}
+  minio:
+    enabled: true
+    endpoint: http://localhost:9000
+    access-key: minioadmin
+    secret-key: minioadmin123
+    bucket-name: test
+  security:
+    enabled: ${SECURITY_ENABLED:false}
+    jwt:
+      secret: ${JWT_SECRET:eap-enterprise-agent-platform-jwt-secret-key-must-be-256-bits-long!!}
+      expiration-ms: 86400000
 
 management:
   endpoints:
@@ -22,14 +131,13 @@ management:
   endpoint:
     health:
       show-details: always
-    prometheus:
-      enabled: true
   metrics:
-    export:
-      prometheus:
-        enabled: true
     tags:
       application: ${spring.application.name}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 
 springdoc:
   api-docs:
@@ -49,8 +157,14 @@ feign:
 logging:
   level:
     com.enterprise.agent: DEBUG
-    org.springframework.ai: INFO
+    org.springframework.ai: DEBUG
     org.springframework.kafka: WARN
     org.springframework.security: WARN
+    org.springframework.web.client: DEBUG
+    com.fasterxml.jackson.databind: DEBUG
+    org.springframework.ai.observation: DEBUG
+    org.springframework.ai.chat.client.advisor: DEBUG
+    reactor.netty.http.client: DEBUG
+    org.springframework.web.reactive.function.client: DEBUG
   pattern:
     console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

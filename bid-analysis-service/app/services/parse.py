@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import hashlib
 import io
 import logging
 import os
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from fastapi import UploadFile
 from pypdf import PdfReader
@@ -11,6 +13,16 @@ from docx import Document
 from app.services.doc_legacy import parse_doc_bytes
 
 logger = logging.getLogger("bid-analysis.parse")
+
+# --- OCR cache (方案一) ---
+_ocr_cache: dict[str, str] = {}
+_ocr_cache_lock = threading.Lock()
+
+# --- Persistent thread pool (方案三) ---
+_page_executor = ThreadPoolExecutor(max_workers=int(os.getenv("OCR_WORKERS", "4")))
+
+# --- Engine lock for thread-safe singleton (方案二) ---
+_engine_lock = threading.Lock()
 
 
 async def parse_upload_to_text(f: UploadFile) -> str:
@@ -73,12 +85,88 @@ def _parse_pdf_bytes(data: bytes) -> str:
     return text
 
 
+def _get_rapidocr():
+    """线程安全双重检查锁单例（方案二）。"""
+    if not hasattr(_get_rapidocr, "_engine"):
+        with _engine_lock:
+            if not hasattr(_get_rapidocr, "_engine"):
+                from rapidocr_onnxruntime import RapidOCR
+                _get_rapidocr._engine = RapidOCR()
+                logger.info("RapidOCR engine initialized")
+    return _get_rapidocr._engine
+
+
+def warmup_ocr():
+    """启动预热：提前初始化 RapidOCR，消除首次请求延迟（方案二）。"""
+    try:
+        _get_rapidocr()
+        logger.info("RapidOCR warmup done")
+    except Exception as e:
+        logger.warning("RapidOCR warmup failed: %s", e)
+
+
+# ── 视觉感知哈希 ──────────────────────────────────────────
+
+_DHASH_SIZE = 16          # 产生 16×16 = 256 bit 哈希
+_DHASH_DPI  = 72          # 低分辨率渲染，速度优先
+
+
+def compute_pdf_page_hashes(data: bytes) -> list[int]:
+    """对 PDF 每页渲染缩略图并计算 dHash，返回每页的哈希整数列表。"""
+    try:
+        import fitz
+        import numpy as np
+        from PIL import Image
+    except Exception as e:
+        logger.warning("pHash dependencies not available: %s", e)
+        return []
+
+    try:
+        doc = fitz.open(stream=data, filetype="pdf")
+    except Exception as e:
+        logger.warning("pHash fitz open failed: %s", e)
+        return []
+
+    zoom = _DHASH_DPI / 72.0
+    mat  = fitz.Matrix(zoom, zoom)
+    size = _DHASH_SIZE
+    hashes: list[int] = []
+
+    for i, page in enumerate(doc):
+        try:
+            pix = page.get_pixmap(matrix=mat, alpha=False)
+            arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, 3)
+            # 灰度缩放到 (size+1) × size，计算横向差分
+            img    = Image.fromarray(arr).convert("L").resize((size + 1, size), Image.LANCZOS)
+            pixels = np.array(img, dtype=float)
+            diff   = pixels[:, :-1] > pixels[:, 1:]          # shape: (size, size)
+            h      = int(sum(int(b) << idx for idx, b in enumerate(diff.flatten())))
+            hashes.append(h)
+        except Exception as e:
+            logger.warning("pHash page=%d failed: %s", i, e)
+            hashes.append(0)
+
+    try:
+        doc.close()
+    except Exception:
+        pass
+
+    logger.info("pHash computed pages=%d", len(hashes))
+    return hashes
+
+
 def _ocr_pdf_bytes(data: bytes) -> str:
-    """OCR each page using PyMuPDF render + pytesseract (parallel)."""
+    """OCR each page using PyMuPDF render + RapidOCR (parallel, with SHA256 cache)."""
+    # 方案一：查缓存
+    key = hashlib.sha256(data).hexdigest()
+    with _ocr_cache_lock:
+        if key in _ocr_cache:
+            logger.info("OCR cache hit sha256=%s", key[:12])
+            return _ocr_cache[key]
+
     try:
         import fitz
         from PIL import Image
-        import pytesseract
         import numpy as np
     except Exception as e:
         logger.warning("OCR dependencies not available: %s", e)
@@ -90,13 +178,11 @@ def _ocr_pdf_bytes(data: bytes) -> str:
         logger.warning("fitz open failed: %s", e)
         return ""
 
-    dpi          = int(os.getenv("OCR_DPI", "120"))
+    dpi          = int(os.getenv("OCR_DPI", "300"))
     zoom         = dpi / 72.0
     mat          = fitz.Matrix(zoom, zoom)
     max_pages    = int(os.getenv("OCR_MAX_PAGES", "0"))
-    max_img_size = int(os.getenv("OCR_MAX_IMAGE_SIZE", "1600"))
-    workers      = int(os.getenv("OCR_WORKERS", "4"))
-    lang         = os.getenv("OCR_LANG", "chi_sim+eng")
+    max_img_size = int(os.getenv("OCR_MAX_IMAGE_SIZE", "4000"))
 
     pages = list(doc)
     if max_pages > 0:
@@ -113,15 +199,13 @@ def _ocr_pdf_bytes(data: bytes) -> str:
             if rotation:
                 page.set_rotation(rotation)
             arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, 3)
-            # 图像尺寸上限，防止超大页面拖慢 OCR
             if max_img_size > 0:
                 h, w = arr.shape[:2]
                 max_side = max(h, w)
                 if max_side > max_img_size:
                     scale = max_img_size / max_side
                     new_h, new_w = int(h * scale), int(w * scale)
-                    img = Image.fromarray(arr)
-                    arr = np.array(img.resize((new_w, new_h), Image.LANCZOS))
+                    arr = np.array(Image.fromarray(arr).resize((new_w, new_h), Image.LANCZOS))
                     logger.info("OCR page=%d resized %dx%d -> %dx%d", i, w, h, new_w, new_h)
             page_arrays.append((i, arr))
         except Exception as e:
@@ -131,30 +215,18 @@ def _ocr_pdf_bytes(data: bytes) -> str:
     except Exception:
         pass
 
-    logger.info("OCR start pages=%d/%d dpi=%d engine=tesseract lang=%s workers=%d",
-                len(page_arrays), len(pages), dpi, lang, workers)
+    logger.info("OCR start pages=%d/%d dpi=%d engine=rapidocr",
+                len(page_arrays), len(pages), dpi)
 
-    # pytesseract 每次调用启动独立子进程，天然线程安全，直接并行
+    engine = _get_rapidocr()
+
     def ocr_page(args: tuple[int, np.ndarray]) -> tuple[int, str]:
         idx, arr = args
         try:
-            from PIL import ImageOps, ImageFilter
-            img = Image.fromarray(arr)
-            # 图像预处理：灰度化 + 对比度拉伸 + 锐化，改善低 DPI 扫描件识别质量
-            img = img.convert('L')
-            img = ImageOps.autocontrast(img)
-            img = img.filter(ImageFilter.SHARPEN)
-            # 方向检测并自动旋转（修正扫描件 90/180/270° 旋转问题）
-            try:
-                osd = pytesseract.image_to_osd(img, output_type=pytesseract.Output.DICT)
-                angle = osd.get("rotate", 0)
-                if angle:
-                    img = img.rotate(-angle, expand=True)
-                    logger.info("OCR page=%d auto-rotated angle=%d", idx, angle)
-            except Exception:
-                pass  # osd.traineddata 不存在时跳过，不影响正常 OCR
-            config = os.getenv("OCR_CONFIG", "--psm 6 --oem 3")
-            text = pytesseract.image_to_string(img, lang=lang, config=config)
+            result, _ = engine(arr)
+            if not result:
+                return idx, ""
+            text = "\n".join(line[1] for line in result)
             oneline = " ".join(text.split())
             logger.info("OCR page=%d textLen=%d content=%s", idx, len(oneline),
                         (oneline[:300] + "...") if len(oneline) > 300 else oneline)
@@ -163,12 +235,17 @@ def _ocr_pdf_bytes(data: bytes) -> str:
             logger.warning("OCR page=%d failed: %s", idx, e)
             return idx, ""
 
+    # 方案三：复用持久线程池（去掉 with ThreadPoolExecutor 每次新建/销毁）
     results: dict[int, str] = {}
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        for idx, text in pool.map(ocr_page, page_arrays):
-            results[idx] = text
+    for idx, text in _page_executor.map(ocr_page, page_arrays):
+        results[idx] = text
 
-    return "\n".join(results.get(i, "") for i in range(len(page_arrays))).strip()
+    result = "\n".join(results.get(i, "") for i in range(len(page_arrays))).strip()
+
+    # 方案一：写缓存
+    with _ocr_cache_lock:
+        _ocr_cache[key] = result
+    return result
 
 
 def _parse_docx_bytes(data: bytes) -> str:

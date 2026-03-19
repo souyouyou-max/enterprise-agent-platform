@@ -8,14 +8,14 @@ import com.enterprise.agent.core.context.AgentContext;
 import com.enterprise.agent.core.context.AgentResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,6 +44,7 @@ public class InteractionCenterAgent extends BaseAgent {
             1. discoverClues(orgCode) - 线索发现：扫描机构异常疑点
             2. analyzeRisk(orgCode) - 风险透视：多维风险评分和报告
             3. checkMonitoring(orgCode) - 监测预警：查看当前预警状态
+            4. 普通对话
 
             工作原则：
             - 根据用户需求，自主决定调用哪些工具、调用顺序
@@ -56,15 +57,26 @@ public class InteractionCenterAgent extends BaseAgent {
             """;
 
     private final AgentOrchestrationToolkit orchestrationToolkit;
-    private final ConversationSession conversationSession;
+    private final ChatClient advisorChatClient;
 
     public InteractionCenterAgent(LlmService llmService,
                                   ChatModel chatModel,
                                   AgentOrchestrationToolkit orchestrationToolkit,
-                                  ConversationSession conversationSession) {
+                                  @Qualifier("advisorChatClient") ChatClient advisorChatClient) {
         super(llmService, chatModel);
         this.orchestrationToolkit = orchestrationToolkit;
-        this.conversationSession = conversationSession;
+        this.advisorChatClient = advisorChatClient;
+        log.info("[InteractionCenter] 初始化完成，ChatModel 类型: {}", chatModel.getClass().getSimpleName());
+        // 打印 OpenAI 客户端实际使用的 base-url 和 completions-path
+        if (chatModel instanceof org.springframework.ai.openai.OpenAiChatModel openAiModel) {
+            try {
+                var options = openAiModel.getDefaultOptions();
+                log.info("[InteractionCenter] OpenAI model={}, base-url 请看 reactor.netty 日志",
+                        options.getModel());
+            } catch (Exception e) {
+                log.warn("[InteractionCenter] 无法读取 OpenAI 配置: {}", e.getMessage());
+            }
+        }
     }
 
     @Override
@@ -97,6 +109,7 @@ public class InteractionCenterAgent extends BaseAgent {
 
     /**
      * 核心多轮对话方法：由 LLM 自主决策调用哪些 Agent 工具
+     * 使用 advisorChatClient（含 MessageChatMemoryAdvisor），与 chatStream() 共享同一记忆
      *
      * @param sessionId   会话 ID（由客户端持有，跨请求复用）
      * @param userMessage 用户自然语言输入
@@ -107,28 +120,25 @@ public class InteractionCenterAgent extends BaseAgent {
         log.info("[InteractionCenter] chat, sessionId={}, message={}", sessionId,
                 safeMessage.substring(0, Math.min(50, safeMessage.length())));
 
-        // 1. 记录用户消息（会话不存在时自动创建）
-        conversationSession.addMessage(sessionId, "user", safeMessage);
-        List<ConversationSession.Message> history = conversationSession.getHistory(sessionId);
-
-        // 2. 构建带工具的 ChatClient，LLM 自主决策调用哪些 Agent
-        ChatClient chatClient = buildChatClient().defaultTools(orchestrationToolkit).build();
-        List<Message> messages = buildMessages(history, safeMessage);
-
-        // 3. 调用 LLM（含自动工具调用循环）
+        // 使用 advisorChatClient（含 MessageChatMemoryAdvisor），记忆由 Advisor 自动管理
         String response;
         try {
-            response = chatClient.prompt()
-                    .messages(messages)
+            response = advisorChatClient
+                    .prompt()
+                    .system(SYSTEM_PROMPT)
+                    .tools(orchestrationToolkit)
+                    .advisors(spec -> spec.param("conversation_id", sessionId))
+                    .user(safeMessage)
                     .call()
                     .content();
+            if (response == null) {
+                response = "";
+            }
+            log.info("[InteractionCenter] chat 完成, sessionId={}, length={}", sessionId, response.length());
         } catch (Exception e) {
             log.error("[InteractionCenter] ChatClient 调用失败，降级为直接回答: {}", e.getMessage(), e);
             response = llmService.chatWithSystem(SYSTEM_PROMPT, safeMessage);
         }
-
-        // 4. 记录助手回复
-        conversationSession.addMessage(sessionId, "assistant", response);
 
         return InteractionResult.builder()
                 .sessionId(sessionId)
@@ -141,21 +151,61 @@ public class InteractionCenterAgent extends BaseAgent {
     }
 
     /**
-     * 将 ConversationSession 历史转换为 Spring AI Message 列表（最近6条）
+     * 流式对话：逐 token 返回 AI 响应，同步维护会话历史
+     *
+     * @param sessionId   会话 ID
+     * @param userMessage 用户自然语言输入
+     * @return 每个 token 的 Flux 流
      */
-    private List<Message> buildMessages(List<ConversationSession.Message> history, String currentMessage) {
-        List<Message> messages = new ArrayList<>();
-        // history 最后一条是刚加入的 user 消息，取倒数第7条到倒数第2条作为历史上下文
-        int end = history.size() - 1;
-        int start = Math.max(0, end - 6);
-        for (ConversationSession.Message m : history.subList(start, end)) {
-            if ("user".equals(m.getRole())) {
-                messages.add(new UserMessage(m.getContent()));
-            } else {
-                messages.add(new AssistantMessage(m.getContent()));
-            }
-        }
-        messages.add(new UserMessage(currentMessage));
-        return messages;
+    public Flux<String> chatStream(String sessionId, String userMessage) {
+        String safeMessage = sanitizeInput(userMessage);
+        log.info("[InteractionCenter] chatStream, sessionId={}, message={}", sessionId,
+                safeMessage.substring(0, Math.min(50, safeMessage.length())));
+
+        // 流式必须让上游收到 stream=true，否则网关返回 JSON 导致解析为空
+        OpenAiChatOptions streamOptions = OpenAiChatOptions.builder().streamUsage(true).build();
+        return advisorChatClient
+                .prompt()
+                .system(SYSTEM_PROMPT)
+                .tools(orchestrationToolkit)
+                .advisors(spec -> spec.param("conversation_id", sessionId))
+                .options(streamOptions)
+                .user(safeMessage)
+                .stream()
+                .content()
+                .filter(chunk -> chunk != null && !chunk.isBlank())
+                .collectList()
+                .flatMapMany(chunks -> {
+                    if (!chunks.isEmpty()) {
+                        return Flux.fromIterable(chunks);
+                    }
+                    // 兜底：当前网关和 Spring AI 在流式解析上兼容性不稳定，空流时降级成普通调用再伪流式返回
+                    log.warn("[InteractionCenter] chatStream 空响应，降级为非流式调用后分片返回, sessionId={}", sessionId);
+                    String fallback = advisorChatClient
+                            .prompt()
+                            .system(SYSTEM_PROMPT)
+                            .tools(orchestrationToolkit)
+                            .advisors(spec -> spec.param("conversation_id", sessionId))
+                            .user(safeMessage)
+                            .call()
+                            .content();
+                    if (fallback == null || fallback.isBlank()) {
+                        return Flux.just("抱歉，暂时没有拿到模型回复，请稍后重试。");
+                    }
+                    return splitByCharacter(fallback, 8);
+                })
+                .onErrorResume(e -> {
+                    log.error("[InteractionCenter] chatStream 最终兜底失败: {}", e.getMessage(), e);
+                    return Flux.just("抱歉，模型服务暂时不可用，请稍后重试。");
+                })
+                .doOnNext(chunk -> log.debug("[InteractionCenter] stream chunk: {} chars", chunk.length()))
+                .doOnComplete(() -> log.info("[InteractionCenter] chatStream 完成, sessionId={}", sessionId))
+                .doOnError(e -> log.error("[InteractionCenter] chatStream 异常: {}", e.getMessage(), e));
     }
+
+    private Flux<String> splitByCharacter(String text, long delayMillis) {
+        return Flux.fromArray(text.split(""))
+                .delayElements(Duration.ofMillis(delayMillis));
+    }
+
 }

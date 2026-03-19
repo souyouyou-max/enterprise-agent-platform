@@ -11,7 +11,6 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -47,16 +46,27 @@ public class SpringAiLlmService implements LlmService {
         try {
             List<Message> messages = buildMessages(request);
             Prompt prompt = new Prompt(messages);
-            ChatResponse response = chatModel.call(prompt);
+            var response = chatModel.call(prompt);
+
+            if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
+                throw new LlmException("LLM 返回空结果（response/result/output 为 null）");
+            }
 
             String content = response.getResult().getOutput().getText();
-            log.debug("[LlmService] LLM 响应长度: {} chars", content != null ? content.length() : 0);
+            if (content == null) {
+                content = "";
+            }
+            log.debug("[LlmService] LLM 响应长度: {} chars", content.length());
+
+            if (content.isBlank()) {
+                throw new LlmException("LLM 返回空响应（可能是上游接口返回空/格式不兼容/路径配置错误）");
+            }
 
             return LlmResponse.builder()
                     .content(content)
                     .model(config.getProvider())
                     .cached(false)
-                    .finishReason(response.getResult().getMetadata().getFinishReason())
+                    .finishReason(response.getResult().getMetadata() == null ? null : response.getResult().getMetadata().getFinishReason())
                     .build();
 
         } catch (Exception e) {
