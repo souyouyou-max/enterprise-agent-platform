@@ -13,8 +13,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * ReviewerAgent - 审查执行结果，输出质量评分（0-100）
@@ -138,23 +136,36 @@ public class ReviewerAgent extends BaseAgent {
             return result;
 
         } catch (Exception e) {
-            log.warn("[Reviewer] JSON 解析失败，使用默认评分: {}", e.getMessage());
+            // 解析失败代表 LLM 输出异常，应给低分触发重试，而非伪造通过分
+            log.warn("[Reviewer] JSON 解析失败，给予低分触发重试: {}", e.getMessage());
             ReviewResult fallback = new ReviewResult();
-            fallback.score = 70;
-            fallback.passed = true;
-            fallback.summary = "自动评审（解析失败）";
-            fallback.issues = List.of();
+            fallback.score = 0;
+            fallback.passed = false;
+            fallback.summary = "自动评审失败（JSON 解析异常）";
+            fallback.issues = List.of("LLM 输出格式异常，无法解析评审结果");
             return fallback;
         }
     }
 
+    /**
+     * 从 LLM 输出中提取第一个完整的 JSON 对象（平衡括号匹配，支持嵌套）。
+     */
     private String extractJsonObject(String text) {
-        Pattern pattern = Pattern.compile("\\{.*\\}", Pattern.DOTALL);
-        Matcher matcher = pattern.matcher(text);
-        if (matcher.find()) {
-            return matcher.group();
+        if (text == null || text.isBlank()) return "{}";
+        // 去除 Markdown 代码块标记
+        String cleaned = text.replaceAll("(?i)```(?:json)?", "").trim();
+        int start = cleaned.indexOf('{');
+        if (start < 0) return cleaned;
+        int depth = 0;
+        for (int i = start; i < cleaned.length(); i++) {
+            char c = cleaned.charAt(i);
+            if (c == '{') depth++;
+            else if (c == '}') {
+                depth--;
+                if (depth == 0) return cleaned.substring(start, i + 1);
+            }
         }
-        return text.trim();
+        return cleaned.substring(start);
     }
 
     private static class ReviewResult {

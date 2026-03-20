@@ -95,8 +95,9 @@ public abstract class BaseAgent {
      * 记录 Agent 执行开始日志
      */
     protected void logStart(AgentContext context) {
-        log.info("[{}] 开始执行, taskId={}, goal={}", getRole(), context.getTaskId(),
-                context.getGoal().substring(0, Math.min(50, context.getGoal().length())));
+        String goal = context.getGoal();
+        String goalPreview = (goal != null) ? goal.substring(0, Math.min(50, goal.length())) : "(无目标)";
+        log.info("[{}] 开始执行, taskId={}, goal={}", getRole(), context.getTaskId(), goalPreview);
     }
 
     /**

@@ -10,7 +10,6 @@ import com.enterprise.agent.core.context.AgentResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -166,37 +165,34 @@ public class InteractionCenterAgent extends BaseAgent {
                 finalMessage.substring(0, Math.min(50, finalMessage.length())));
         final boolean useOrgTools = shouldUseTools(finalMessage);
 
-        // 流式必须让上游收到 stream=true，否则网关返回 JSON 导致解析为空
-        OpenAiChatOptions streamOptions = OpenAiChatOptions.builder().streamUsage(true).build();
         ChatClient.ChatClientRequestSpec streamSpec = advisorChatClient
                 .prompt()
                 .system(SYSTEM_PROMPT)
                 .advisors(advisor -> advisor.param("conversation_id", sessionId))
-                .options(streamOptions)
                 .user(finalMessage);
         streamSpec = applyTools(streamSpec, useOrgTools);
-        return streamSpec.stream()
+
+        // 直接透传流式 token，不在此处 collectList——collectList 会等全部 token 到齐后才开始
+        // 发送，丧失流式的逐字输出体验。空 chunk 降级逻辑改为 onErrorResume 兜底。
+        final ChatClient.ChatClientRequestSpec finalStreamSpec = streamSpec;
+        return finalStreamSpec.stream()
                 .content()
                 .filter(chunk -> chunk != null && !chunk.isBlank())
-                .collectList()
-                .flatMapMany(chunks -> {
-                    if (!chunks.isEmpty()) {
-                        return Flux.fromIterable(chunks);
-                    }
-                    // 兜底：当前网关和 Spring AI 在流式解析上兼容性不稳定，空流时降级成普通调用再伪流式返回
+                .switchIfEmpty(Flux.defer(() -> {
+                    // 流为空时降级为普通调用再逐字分片模拟流式（兼容部分网关/模型不支持 SSE 的场景）
                     log.warn("[InteractionCenter] chatStream 空响应，降级为非流式调用后分片返回, sessionId={}", sessionId);
                     ChatClient.ChatClientRequestSpec fallbackSpec = advisorChatClient
                             .prompt()
                             .system(SYSTEM_PROMPT)
                             .advisors(advisor -> advisor.param("conversation_id", sessionId))
                             .user(finalMessage);
-                    fallbackSpec = applyTools(fallbackSpec, useOrgTools);
-                    String fallback = fallbackSpec.call().content();
+                    ChatClient.ChatClientRequestSpec fb = applyTools(fallbackSpec, useOrgTools);
+                    String fallback = fb.call().content();
                     if (fallback == null || fallback.isBlank()) {
                         return Flux.just("抱歉，暂时没有拿到模型回复，请稍后重试。");
                     }
                     return splitByCharacter(fallback, 8);
-                })
+                }))
                 .onErrorResume(e -> {
                     log.error("[InteractionCenter] chatStream 最终兜底失败: {}", e.getMessage(), e);
                     return Flux.just("抱歉，模型服务暂时不可用，请稍后重试。");

@@ -20,11 +20,18 @@
             <artifactId>eap-common</artifactId>
         </dependency>
 
-        <!-- Spring AI - OpenAI -->
+        <!-- Spring AI - OpenAI（默认 provider，必选） -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-openai</artifactId>
         </dependency>
+
+        <!--
+          Anthropic / Ollama starter 不在此处引入。
+          ChatModelConfig 改为通过 ApplicationContext.getBean(beanName) 懒查找，
+          无需对可选 starter 中的类有任何字节码级引用。
+          需要切换 provider 时，在 eap-app/pom.xml 引入对应 starter 即可。
+        -->
         <!-- Jackson (RedisConfig 序列化依赖) -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

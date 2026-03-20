@@ -201,6 +201,7 @@ public class MultimodalServiceImpl implements MultimodalService {
         int step = Math.max(1, maxImagesPerCall);
         List<String> contents = new ArrayList<>();
         ArrayNode mergedResponses = objectMapper.createArrayNode();
+        ArrayNode batchImageBase64s = objectMapper.createArrayNode();
         boolean allSuccess = true;
         int maxHttpStatus = 200;
 
@@ -208,6 +209,16 @@ public class MultimodalServiceImpl implements MultimodalService {
             int startIndex = i;
             int endExclusive = Math.min(i + step, imageDataUrls.size());
             List<String> batch = imageDataUrls.subList(startIndex, endExclusive);
+            // 每个 batch 对应一条 split（多批路径）；保存该 batch 用到的图片 base64（JSON数组字符串形态入库）
+            ArrayNode batchBase64s = objectMapper.createArrayNode();
+            for (String dataUrl : batch) {
+                String base64 = extractBase64FromDataUrl(dataUrl);
+                if (base64 != null && !base64.isBlank()) {
+                    batchBase64s.add(base64);
+                }
+            }
+            batchImageBase64s.add(batchBase64s);
+
             int totalPages = imageDataUrls.size();
             int startPageNo = startIndex + 1;
             int endPageNo = endExclusive;
@@ -235,6 +246,7 @@ public class MultimodalServiceImpl implements MultimodalService {
         merged.put("httpStatus", maxHttpStatus);
         merged.put("result", String.join("\n\n", contents));
         merged.set("response", mergedResponses);
+        merged.set("batchImageBase64s", batchImageBase64s);
         return merged;
     }
 
@@ -334,6 +346,10 @@ public class MultimodalServiceImpl implements MultimodalService {
                 pageReq.put("imageBase64", base64);
                 JsonNode node = objectMapper.readTree(
                         dazhiOcrTool.execute(objectMapper.writeValueAsString(pageReq)).toJsonString());
+                // 为后续入库提供：每个 split 对应的原始识别 base64（便于追溯/重跑）。
+                if (node != null && node.isObject()) {
+                    ((ObjectNode) node).put("imageBase64", base64);
+                }
                 pages.add(node);
             }
         }
@@ -397,7 +413,21 @@ public class MultimodalServiceImpl implements MultimodalService {
         view.put("httpStatus", toolNode.path("httpStatus").asInt(0));
         view.put("content", extractImg2TextContent(toolNode));
         view.set("response", toolNode.path("response"));
+        // 该字段仅在 attachments 分批场景下存在；用于持久化 split 基础信息（base64）。
+        view.set("batchImageBase64s", toolNode.path("batchImageBase64s"));
         return view;
+    }
+
+    private String extractBase64FromDataUrl(String dataUrl) {
+        if (dataUrl == null) {
+            return null;
+        }
+        String raw = dataUrl;
+        int comma = raw.indexOf(',');
+        if (comma >= 0 && comma + 1 < raw.length()) {
+            raw = raw.substring(comma + 1);
+        }
+        return raw;
     }
 
     private ObjectNode buildDazhiOcrView(JsonNode resultNode) {

@@ -45,6 +45,12 @@ const menuItems = [
     ],
   },
   {
+    key: 'ocr-preview',
+    icon: <FileTextOutlined />,
+    label: 'OCR 识别预览',
+    path: '/ocr-preview',
+  },
+  {
     key: 'diff-viewer',
     icon: <DiffOutlined />,
     label: '文件 Diff 视图',
@@ -67,6 +73,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/compare-base64': 'Base64 文件对比',
   '/diff-viewer': '文件相似度 Diff 视图',
   '/chat': 'AI 对话',
+  '/ocr-preview': 'OCR 识别预览',
 }
 
 type HealthStatus = 'unknown' | 'ok' | 'err'

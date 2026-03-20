@@ -23,6 +23,11 @@
             <groupId>com.enterprise.agent</groupId>
             <artifactId>eap-data-repository</artifactId>
         </dependency>
+        <!-- 工具层：EnterpriseTool / ToolRegistry / tool 实现（已从 eap-data-repository 迁移至此） -->
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-engine-tools</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.enterprise.agent</groupId>
             <artifactId>eap-engine-agent-core</artifactId>

@@ -100,6 +100,14 @@ public class AgentPipelineService {
                     .message("审查完成，评分: " + context.getReviewScore())
                     .build());
 
+            // 超出最大重试次数后质量仍未达标，直接失败，避免用低质量结果生成报告
+            if (!reviewPassed) {
+                failTask(taskId, taskName,
+                        String.format("质量审查未通过，最终评分 %d/100（阈值60），已重试 %d 次",
+                                context.getReviewScore(), MAX_REVIEW_RETRIES));
+                return;
+            }
+
             // Step 6: COMMUNICATING
             updateStatus(taskId, TaskStatus.REVIEWING, TaskStatus.COMMUNICATING);
 

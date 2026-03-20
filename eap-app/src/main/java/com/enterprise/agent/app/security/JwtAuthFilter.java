@@ -31,23 +31,38 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        try {
-            String token = extractJwtFromRequest(request);
-            if (StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
-                String username = jwtUtil.extractUsername(token);
-                UserDetails userDetails = User.builder()
-                        .username(username)
-                        .password("")
-                        .authorities(List.of())
-                        .build();
+        String token = extractJwtFromRequest(request);
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+        // 未携带 token：直接放行，由 SecurityConfig 决定该端点是否需要认证
+        if (!StringUtils.hasText(token)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // 携带了 token 但验证失败：直接返回 401，不再继续过滤器链
+        try {
+            if (!jwtUtil.validateToken(token)) {
+                log.warn("[JwtFilter] token 验证失败，拒绝请求: {}", request.getRequestURI());
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token 无效或已过期");
+                return;
             }
+
+            String username = jwtUtil.extractUsername(token);
+            UserDetails userDetails = User.builder()
+                    .username(username)
+                    .password("")
+                    .authorities(List.of())
+                    .build();
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
         } catch (Exception e) {
-            log.error("[JwtFilter] 认证失败: {}", e.getMessage());
+            log.warn("[JwtFilter] token 解析异常，拒绝请求: {} - {}", request.getRequestURI(), e.getMessage());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token 解析失败");
+            return;
         }
 
         filterChain.doFilter(request, response);

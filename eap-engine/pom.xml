@@ -20,5 +20,6 @@
         <module>eap-engine-agent</module>
         <module>eap-engine-rag</module>
         <module>eap-engine-rule</module>
+        <module>eap-engine-tools</module>
     </modules>
 </project>

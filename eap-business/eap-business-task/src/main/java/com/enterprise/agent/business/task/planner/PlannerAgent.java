@@ -13,8 +13,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -132,13 +130,29 @@ public class PlannerAgent extends BaseAgent {
         }
     }
 
+    /**
+     * 从 LLM 输出中提取第一个完整的 JSON 数组（平衡括号匹配，支持嵌套）。
+     * 相比正则，可正确处理数组元素内含 ] 的情况（如字符串字段）。
+     */
     private String extractJsonArray(String text) {
-        Pattern pattern = Pattern.compile("\\[.*\\]", Pattern.DOTALL);
-        Matcher matcher = pattern.matcher(text);
-        if (matcher.find()) {
-            return matcher.group();
+        if (text == null || text.isBlank()) return "[]";
+        // 去除 Markdown 代码块标记
+        String cleaned = text.replaceAll("(?i)```(?:json)?", "").trim();
+        // 优先查找 [{ 开头的 JSON 对象数组，其次查找任意 [
+        int start = cleaned.indexOf("[{");
+        if (start < 0) start = cleaned.indexOf('[');
+        if (start < 0) return cleaned;
+        int depth = 0;
+        for (int i = start; i < cleaned.length(); i++) {
+            char c = cleaned.charAt(i);
+            if (c == '[') depth++;
+            else if (c == ']') {
+                depth--;
+                if (depth == 0) return cleaned.substring(start, i + 1);
+            }
         }
-        return text.trim();
+        // 括号未闭合时返回截取到末尾的内容
+        return cleaned.substring(start);
     }
 
     private List<AgentContext.SubTask> buildDefaultSubTasks() {

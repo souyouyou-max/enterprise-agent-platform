@@ -48,7 +48,10 @@
         <!-- Utils -->
         <jackson.version>2.17.2</jackson.version>
         <lombok.version>1.18.34</lombok.version>
-        <mapstruct.version>1.6.2</mapstruct.version>
+        <!-- File Processing（各模块统一版本，勿在子 pom 重复声明） -->
+        <minio.version>8.5.11</minio.version>
+        <pdfbox.version>3.0.2</pdfbox.version>
+        <poi.version>5.3.0</poi.version>
     </properties>
 
     <dependencyManagement>
@@ -110,6 +113,11 @@
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
                 <artifactId>eap-engine-llm</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.enterprise.agent</groupId>
+                <artifactId>eap-engine-tools</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -215,6 +223,33 @@
                 <artifactId>lombok</artifactId>
                 <version>${lombok.version}</version>
                 <scope>provided</scope>
+            </dependency>
+
+            <!-- File Processing — 统一版本，子模块引用时无需声明 version -->
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${minio.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-scratchpad</artifactId>
+                <version>${poi.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
