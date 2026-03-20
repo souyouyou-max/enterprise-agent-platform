@@ -8,6 +8,7 @@ import com.enterprise.agent.core.context.AgentContext;
 import com.enterprise.agent.core.context.AgentResult;
 import com.enterprise.agent.tools.EnterpriseTool;
 import com.enterprise.agent.tools.ToolRegistry;
+import com.enterprise.agent.common.core.response.ToolResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.stereotype.Component;
@@ -60,13 +61,13 @@ public class ExecutorAgent extends BaseAgent {
 
         for (AgentContext.SubTask subTask : context.getSubTasks()) {
             log.info("[Executor] 执行子任务 {}: {}", subTask.getSequence(), subTask.getDescription());
-            subTask.setStatus("EXECUTING");
+            subTask.setStatus(AgentContext.SubTaskStatus.EXECUTING);
 
             try {
                 String result = executeSubTaskWithRetry(subTask, context);
                 executionResults.put(subTask.getSequence(), result);
                 subTask.setResult(result);
-                subTask.setStatus("COMPLETED");
+                subTask.setStatus(AgentContext.SubTaskStatus.COMPLETED);
                 log.info("[Executor] 子任务 {} 完成", subTask.getSequence());
 
             } catch (Exception e) {
@@ -74,13 +75,13 @@ public class ExecutorAgent extends BaseAgent {
                 log.error("[Executor] 子任务 {} 失败: {}", subTask.getSequence(), e.getMessage());
                 executionResults.put(subTask.getSequence(), errorMsg);
                 subTask.setResult(errorMsg);
-                subTask.setStatus("FAILED");
+                subTask.setStatus(AgentContext.SubTaskStatus.FAILED);
             }
         }
 
         context.setExecutionResults(executionResults);
 
-        long completed = context.getSubTasks().stream().filter(t -> "COMPLETED".equals(t.getStatus())).count();
+        long completed = context.getSubTasks().stream().filter(t -> AgentContext.SubTaskStatus.COMPLETED == t.getStatus()).count();
         String summary = String.format("执行完成: %d/%d 个子任务成功", completed, context.getSubTasks().size());
 
         AgentResult result = AgentResult.builder()
@@ -118,18 +119,19 @@ public class ExecutorAgent extends BaseAgent {
         Exception lastException = null;
         while (attempts < MAX_TOOL_RETRIES) {
             try {
-                String result = tool.execute(toolParams);
+                ToolResponse result = tool.execute(toolParams);
                 if (attempts > 0) {
                     log.info("[Executor] 工具 {} 第 {} 次重试成功", toolName, attempts + 1);
                 }
-                return result;
+                return result == null ? "{\"success\":false,\"message\":\"tool返回为空\"}" : result.toJsonString();
             } catch (Exception e) {
                 lastException = e;
                 attempts++;
                 log.warn("[Executor] 工具 {} 调用失败，第 {}/{} 次: {}", toolName, attempts, MAX_TOOL_RETRIES, e.getMessage());
                 if (attempts < MAX_TOOL_RETRIES) {
                     try {
-                        Thread.sleep(500L * attempts);
+                        // 指数退避：第 1 次等 500ms，第 2 次等 1s，第 3 次等 2s …
+                        Thread.sleep(500L << (attempts - 1));
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                         break;

@@ -32,6 +32,11 @@
             <groupId>com.enterprise.agent</groupId>
             <artifactId>eap-business-chat</artifactId>
         </dependency>
+        <!-- 显式依赖：保证主应用运行时类路径含 eap-data-repository（含 DazhiOcrTool 等），避免 IDEA/增量编译偶发缺类 -->
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-data-repository</artifactId>
+        </dependency>
 
         <!-- ── Spring Boot Web/Security/Actuator ── -->
         <dependency>
@@ -100,7 +105,6 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
-            <version>4.1.3</version>
         </dependency>
 
         <!-- ── JWT（SecurityConfig / JwtUtil 直接使用） ── -->

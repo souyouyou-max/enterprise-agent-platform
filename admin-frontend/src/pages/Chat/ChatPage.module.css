@@ -1,8 +1,8 @@
 .page {
-  max-width: 960px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 0 12px;
-  height: calc(100vh - 56px - 48px);
+  padding: 0 8px;
+  height: calc(100vh - 60px - 40px);
   display: flex;
   flex-direction: column;
 }
@@ -23,7 +23,8 @@
     radial-gradient(1000px 450px at 10% -10%, rgba(124, 143, 252, 0.18) 0%, rgba(124, 143, 252, 0) 60%),
     radial-gradient(900px 400px at 95% 0%, rgba(89, 196, 255, 0.14) 0%, rgba(89, 196, 255, 0) 55%),
     linear-gradient(180deg, rgba(250, 250, 252, 1) 0%, rgba(245, 246, 250, 1) 100%);
-  border-radius: 12px;
+  border-radius: 14px;
+  border: 1px solid #e6ecfb;
 }
 
 .row {
@@ -42,10 +43,10 @@
 }
 
 .bubble {
-  max-width: min(720px, 78%);
-  padding: 10px 12px;
-  border-radius: 14px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  max-width: min(760px, 80%);
+  padding: 11px 13px;
+  border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(35, 56, 103, 0.08);
   white-space: pre-wrap;
   word-break: break-word;
   line-height: 1.65;
@@ -58,7 +59,7 @@
 }
 
 .bubbleAssistant {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.96);
   color: rgba(0, 0, 0, 0.88);
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-top-left-radius: 6px;

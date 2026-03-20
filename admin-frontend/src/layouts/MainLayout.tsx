@@ -13,6 +13,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useConfig } from '@/store/config'
 import { apiFetch } from '@/api/client'
+import styles from './MainLayout.module.css'
 
 const { Sider, Header, Content } = Layout
 const { Text } = Typography
@@ -126,19 +127,19 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     )
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout className={styles.rootLayout}>
       <Sider
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
         width={220}
-        style={{ background: '#1a1d2e' }}
+        className={styles.sider}
         theme="dark"
       >
         {!collapsed && (
-          <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid #2e3150' }}>
-            <div style={{ fontWeight: 700, color: '#fff', fontSize: 15 }}>标书分析系统</div>
-            <div style={{ fontSize: 11, color: '#666', marginTop: 3 }}>Bid Analysis Service</div>
+          <div className={styles.brand}>
+            <div className={styles.brandTitle}>标书分析系统</div>
+            <div className={styles.brandSubtitle}>Bid Analysis Service</div>
           </div>
         )}
         <Menu
@@ -147,23 +148,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           selectedKeys={[activeKey]}
           defaultOpenKeys={['texts', 'files']}
           items={buildMenuItems()}
-          style={{ background: '#1a1d2e', borderRight: 'none', marginTop: collapsed ? 16 : 0 }}
+          className={styles.menu}
+          style={{ marginTop: collapsed ? 16 : 0 }}
         />
       </Sider>
 
       <Layout>
-        <Header
-          style={{
-            background: '#fff',
-            padding: '0 24px',
-            borderBottom: '1px solid #f0f0f0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            height: 56,
-          }}
-        >
-          <Text strong style={{ fontSize: 16 }}>{pageTitle}</Text>
+        <Header className={styles.header}>
+          <Text strong className={styles.headerTitle}>{pageTitle}</Text>
           <Space>
             {statusDot}
             <Input
@@ -179,8 +171,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </Space>
         </Header>
 
-        <Content style={{ padding: 24, background: '#f0f2f5', overflow: 'auto' }}>
-          {children}
+        <Content className={styles.content}>
+          <div className={styles.contentInner}>
+            {children}
+          </div>
         </Content>
       </Layout>
     </Layout>

@@ -1,21 +1,25 @@
 spring:
-  application:
-    name: eap-app
   cloud:
     nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        enabled: ${NACOS_ENABLED:true}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+        fail-fast: true
+
       config:
         server-addr: ${NACOS_ADDR:localhost:8848}
         username: ${NACOS_USERNAME:nacos}
         password: ${NACOS_PASSWORD:nacos}
         file-extension: yml
         namespace: ${NACOS_NAMESPACE:}
+        fail-fast: true
         # 公共配置（所有服务共享）
         shared-configs:
           - data-id: common.yml
             group: DEFAULT_GROUP
             refresh: true
-        # 服务专属配置
-        extension-configs:
           - data-id: eap-app.yml
             group: DEFAULT_GROUP
             refresh: true

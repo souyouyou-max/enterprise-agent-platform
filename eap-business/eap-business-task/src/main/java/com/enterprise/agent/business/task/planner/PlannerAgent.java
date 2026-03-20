@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * PlannerAgent - 接收用户目标，拆解为 3-5 个可执行子任务
@@ -30,7 +31,7 @@ public class PlannerAgent extends BaseAgent {
 
             规则：
             1. 子任务必须具体、可操作，避免模糊描述
-            2. 每个子任务需标注所需工具（可选值：getSalesData、getEmployeeInfo、queryCrmData、generateSqlQuery、classifyTextSemantics、img2Text、professionalQa、none）
+            2. 每个子任务需标注所需工具（可选值：getSalesData、getEmployeeInfo、queryCrmData、generateSqlQuery、classifyTextSemantics、img2Text、none）
             3. 按执行顺序排列子任务
             4. 严格输出 JSON 格式，不要包含任何额外文字
 
@@ -78,7 +79,7 @@ public class PlannerAgent extends BaseAgent {
             String output = "已规划 " + subTasks.size() + " 个子任务:\n" +
                     subTasks.stream()
                             .map(t -> String.format("  %d. %s [工具: %s]", t.getSequence(), t.getDescription(), t.getToolName()))
-                            .reduce("", (a, b) -> a + "\n" + b);
+                            .collect(Collectors.joining("\n"));
 
             AgentResult result = AgentResult.builder()
                     .agentRole(AgentRole.PLANNER)
@@ -103,7 +104,7 @@ public class PlannerAgent extends BaseAgent {
                 可用工具：getSalesData（部门+季度销售数据）、getEmployeeInfo（员工信息）、
                          queryCrmData（CRM客户数据）、generateSqlQuery（自然语言转SQL）、
                          classifyTextSemantics（语义文本分类）、img2Text（图片识别转文本）、
-                         professionalQa（专业知识问答）
+                         none
                 """, goal);
     }
 
@@ -120,7 +121,7 @@ public class PlannerAgent extends BaseAgent {
                         .description(dto.description)
                         .toolName(dto.toolName != null ? dto.toolName : "none")
                         .toolParams(dto.toolParams != null ? dto.toolParams : "")
-                        .status("PENDING")
+                        .status(AgentContext.SubTaskStatus.PENDING)
                         .build());
             }
             return subTasks;
@@ -142,9 +143,9 @@ public class PlannerAgent extends BaseAgent {
 
     private List<AgentContext.SubTask> buildDefaultSubTasks() {
         return List.of(
-                AgentContext.SubTask.builder().sequence(1).description("获取销售数据").toolName("getSalesData").toolParams("{\"department\":\"all\"}").status("PENDING").build(),
-                AgentContext.SubTask.builder().sequence(2).description("分析数据趋势").toolName("generateSqlQuery").toolParams("{\"question\":\"分析销售趋势\"}").status("PENDING").build(),
-                AgentContext.SubTask.builder().sequence(3).description("生成分析报告").toolName("none").toolParams("").status("PENDING").build()
+                AgentContext.SubTask.builder().sequence(1).description("获取销售数据").toolName("getSalesData").toolParams("{\"department\":\"all\"}").status(AgentContext.SubTaskStatus.PENDING).build(),
+                AgentContext.SubTask.builder().sequence(2).description("分析数据趋势").toolName("generateSqlQuery").toolParams("{\"question\":\"分析销售趋势\"}").status(AgentContext.SubTaskStatus.PENDING).build(),
+                AgentContext.SubTask.builder().sequence(3).description("生成分析报告").toolName("none").toolParams("").status(AgentContext.SubTaskStatus.PENDING).build()
         );
     }
 

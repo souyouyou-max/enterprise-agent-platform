@@ -1,5 +1,7 @@
 package com.enterprise.agent.tools;
 
+import com.enterprise.agent.common.core.response.ToolResponse;
+
 /**
  * 企业工具统一接口
  */
@@ -19,7 +21,7 @@ public interface EnterpriseTool {
      * 执行工具
      *
      * @param params JSON 格式参数字符串
-     * @return 工具执行结果字符串
+     * @return 工具执行结果（可包含原始 JSON）
      */
-    String execute(String params);
+    ToolResponse execute(String params);
 }

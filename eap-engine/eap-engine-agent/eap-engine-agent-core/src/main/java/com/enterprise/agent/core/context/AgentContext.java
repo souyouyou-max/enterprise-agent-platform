@@ -59,6 +59,11 @@ public class AgentContext {
     @Builder.Default
     private Map<String, Object> metadata = new HashMap<>();
 
+    /** 子任务执行状态枚举，取代裸字符串，避免拼写错误 */
+    public enum SubTaskStatus {
+        PENDING, EXECUTING, COMPLETED, FAILED
+    }
+
     @Data
     @Builder
     public static class SubTask {
@@ -68,6 +73,6 @@ public class AgentContext {
         private String toolParams;
         private String result;
         @Builder.Default
-        private String status = "PENDING";
+        private SubTaskStatus status = SubTaskStatus.PENDING;
     }
 }

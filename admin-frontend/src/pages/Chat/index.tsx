@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Avatar, Button, Card, Divider, Flex, Input, Spin, Tag, Typography, Upload, message } from 'antd'
 import { ApiOutlined, DeleteOutlined, LinkOutlined, PaperClipOutlined, RobotOutlined, SendOutlined, UserOutlined } from '@ant-design/icons'
 import { toBase64 } from '@/api/client'
-import { createChatSession, img2TextChat, streamChat } from './chatApi'
+import { createChatSession, autoOcrChat, streamChat } from './chatApi'
 import type { ChatMessage } from './types'
 import styles from './ChatPage.module.css'
 
@@ -105,25 +105,24 @@ export default function ChatPage() {
 
     try {
       if (hasImage) {
-        const contents: Array<
-          | { type: 'image_url'; image_url: { url: string } }
-          | { type: 'text'; text: string }
-        > = currentAttachments.map(item => ({
-          type: 'image_url' as const,
-          image_url: {
-            url: `data:${item.mimeType || 'image/jpeg'};base64,${item.base64}`,
-          },
-        }))
-        contents.push({ type: 'text' as const, text: userText })
-        const result = await img2TextChat(javaUrl, {
-          messages: [{ role: 'user', content: contents }],
+        const payload = {
+          text: userText,
+          attachments: currentAttachments.map(item => ({
+            name: item.name,
+            mimeType: item.mimeType || 'application/octet-stream',
+            base64: item.base64,
+          })),
           user_info: {
             user_id: '1',
             user_name: '赵一名',
             user_dept_name: '互联网应用研发团队',
             user_company: '集团应用研发部',
           },
-        })
+        } as const
+
+        // 前端不再判断走哪个引擎，统一交给后端 auto-ocr 决策
+        const result = await autoOcrChat(javaUrl, payload)
+
         setMessages(prev => prev.map(m => (
           m.id === assistantId ? { ...m, content: result } : m
         )))
@@ -299,7 +298,7 @@ export default function ChatPage() {
                   : <Tag key={`${item.name}-${idx}`} color="processing">{item.name}</Tag>
               ))}
             </div>
-            <Tag color="processing">已选择 {attachments.length} 个附件，发送时将走图片识别</Tag>
+            <Tag color="processing">已选择 {attachments.length} 个附件，发送时将走图文识别（文档将按页转图）</Tag>
             <Button size="small" onClick={clearImage}>移除</Button>
           </div>
         )}
@@ -319,7 +318,7 @@ export default function ChatPage() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={sessionId ? '输入问题（可选），可搭配图片一起发送' : '未连接，先点击右上角连接'}
+            placeholder={sessionId ? '输入问题（可选），可搭配图片/文档一起发送' : '未连接，先点击右上角连接'}
             autoSize={{ minRows: 1, maxRows: 6 }}
             style={{ borderRadius: 10 }}
             disabled={loading || !sessionId}

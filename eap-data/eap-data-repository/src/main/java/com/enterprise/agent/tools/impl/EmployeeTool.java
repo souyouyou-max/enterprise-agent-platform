@@ -1,5 +1,6 @@
 package com.enterprise.agent.tools.impl;
 
+import com.enterprise.agent.common.core.response.ToolResponse;
 import com.enterprise.agent.tools.EnterpriseTool;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,7 +43,7 @@ public class EmployeeTool implements EnterpriseTool {
     }
 
     @Override
-    public String execute(String params) {
+    public ToolResponse execute(String params) {
         log.info("[EmployeeTool] 查询员工, params={}", params);
         try {
             String employeeId = "E001"; // 默认
@@ -53,10 +54,10 @@ public class EmployeeTool implements EnterpriseTool {
                 else if (node.has("employeeId")) employeeId = node.get("employeeId").asText();
             }
 
-            return buildEmployeeResponse(employeeId);
+            return ToolResponse.fromRawJson(buildEmployeeResponse(employeeId));
         } catch (Exception e) {
             log.error("[EmployeeTool] 执行失败: {}", e.getMessage());
-            return "{\"error\": \"员工查询失败\"}";
+            return ToolResponse.failure("员工查询失败");
         }
     }
 

@@ -1,6 +1,7 @@
 package com.enterprise.agent.tools.impl;
 
 import com.enterprise.agent.common.ai.service.LlmService;
+import com.enterprise.agent.common.core.response.ToolResponse;
 import com.enterprise.agent.tools.EnterpriseTool;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,7 +50,7 @@ public class SqlGeneratorTool implements EnterpriseTool {
     }
 
     @Override
-    public String execute(String params) {
+    public ToolResponse execute(String params) {
         log.info("[SqlGeneratorTool] 生成SQL, params={}", params);
         try {
             String question = "查询最近10条任务";
@@ -62,10 +63,10 @@ public class SqlGeneratorTool implements EnterpriseTool {
             String sanitizedQuestion = sanitizeQuestion(question);
             String llmResponse = llmService.chatWithSystem(SQL_SYSTEM_PROMPT, sanitizedQuestion);
 
-            return buildSqlResult(question, llmResponse);
+            return ToolResponse.fromRawJson(buildSqlResult(question, llmResponse));
         } catch (Exception e) {
             log.error("[SqlGeneratorTool] 执行失败: {}", e.getMessage());
-            return buildFallbackSql();
+            return ToolResponse.fromRawJson(buildFallbackSql());
         }
     }
 

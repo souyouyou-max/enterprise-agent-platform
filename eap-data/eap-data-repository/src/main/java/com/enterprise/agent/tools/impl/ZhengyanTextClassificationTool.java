@@ -1,5 +1,6 @@
 package com.enterprise.agent.tools.impl;
 
+import com.enterprise.agent.common.core.response.ToolResponse;
 import com.enterprise.agent.tools.EnterpriseTool;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,12 +70,12 @@ public class ZhengyanTextClassificationTool implements EnterpriseTool {
     }
 
     @Override
-    public String execute(String params) {
+    public ToolResponse execute(String params) {
         if (!enabled) {
-            return "{\"success\":false,\"message\":\"正言文本分类工具未启用（eap.tools.zhengyan.text-classification.enabled=false）\"}";
+            return ToolResponse.failure("正言文本分类工具未启用（eap.tools.zhengyan.text-classification.enabled=false）");
         }
         if (endpoint == null || endpoint.isBlank()) {
-            return "{\"success\":false,\"message\":\"未配置正言接口地址（eap.tools.zhengyan.text-classification.endpoint）\"}";
+            return ToolResponse.failure("未配置正言接口地址（eap.tools.zhengyan.text-classification.endpoint）");
         }
 
         try {
@@ -94,10 +95,10 @@ public class ZhengyanTextClassificationTool implements EnterpriseTool {
             }
 
             HttpResponse<String> response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
-            return buildResponse(response.statusCode(), requestBody, response.body());
+            return ToolResponse.fromRawJson(buildResponse(response.statusCode(), requestBody, response.body()));
         } catch (Exception e) {
             log.error("[ZhengyanTextClassificationTool] 调用失败: {}", e.getMessage(), e);
-            return "{\"success\":false,\"message\":\"调用正言文本分类失败: " + sanitizeError(e.getMessage()) + "\"}";
+            return ToolResponse.failure("调用正言文本分类失败: " + sanitizeError(e.getMessage()));
         }
     }
 

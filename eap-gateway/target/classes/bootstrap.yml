@@ -11,11 +11,11 @@ spring:
         namespace: ${NACOS_NAMESPACE:}
         # 公共配置（所有服务共享）
         shared-configs:
-          - data-id: common.yml
+          - data-id: common
             group: DEFAULT_GROUP
             refresh: true
         # 服务专属配置
         extension-configs:
-          - data-id: eap-gateway.yml
+          - data-id: eap-gateway
             group: DEFAULT_GROUP
             refresh: true

@@ -1,5 +1,6 @@
 package com.enterprise.agent.tools.impl;
 
+import com.enterprise.agent.common.core.response.ToolResponse;
 import com.enterprise.agent.tools.EnterpriseTool;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,7 +36,7 @@ public class CrmTool implements EnterpriseTool {
     }
 
     @Override
-    public String execute(String params) {
+    public ToolResponse execute(String params) {
         log.info("[CrmTool] 查询CRM数据, params={}", params);
         try {
             String customerId = "C001";
@@ -43,10 +44,10 @@ public class CrmTool implements EnterpriseTool {
                 JsonNode node = objectMapper.readTree(params);
                 if (node.has("customerId")) customerId = node.get("customerId").asText();
             }
-            return buildCrmResponse(customerId);
+            return ToolResponse.fromRawJson(buildCrmResponse(customerId));
         } catch (Exception e) {
             log.error("[CrmTool] 执行失败: {}", e.getMessage());
-            return "{\"error\": \"CRM查询失败\"}";
+            return ToolResponse.failure("CRM查询失败");
         }
     }
 

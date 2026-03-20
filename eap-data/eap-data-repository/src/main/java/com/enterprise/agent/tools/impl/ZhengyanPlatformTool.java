@@ -1,6 +1,7 @@
 package com.enterprise.agent.tools.impl;
 
 import com.enterprise.agent.tools.EnterpriseTool;
+import com.enterprise.agent.common.core.response.ToolResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -18,7 +19,6 @@ import java.time.Duration;
 /**
  * 正言平台统一工具：
  * 1) img2text: /ai/ability/multimodal/v1/img2text
- * 2) professional qa: /ai/ability/professional/v1/qa
  */
 @Slf4j
 @Component
@@ -33,19 +33,16 @@ public class ZhengyanPlatformTool implements EnterpriseTool {
     @Value("${eap.tools.zhengyan.platform.timeout-ms:20000}")
     private int timeoutMs;
 
-    @Value("${eap.tools.zhengyan.platform.authorization:}")
+    @Value("${eap.tools.zhengyan.platform.authorization}")
     private String authorization;
 
     @Value("${eap.tools.zhengyan.platform.app-id:}")
     private String appId;
 
-    @Value("${eap.tools.zhengyan.platform.endpoints.img2text:https://zhengyan.sinosig.com/ai/ability/multimodal/v1/img2text}")
+    @Value("${eap.tools.zhengyan.platform.endpoints.img2text}")
     private String img2TextEndpoint;
 
-    @Value("${eap.tools.zhengyan.platform.endpoints.professional-qa:https://zhengyan.sinosig.com/ai/ability/professional/v1/qa}")
-    private String professionalQaEndpoint;
-
-    @Value("${eap.tools.zhengyan.platform.default-model-type:}")
+    @Value("${eap.tools.zhengyan.platform.default-model-type}")
     private String defaultModelType;
 
     public ZhengyanPlatformTool(ObjectMapper objectMapper) {
@@ -59,11 +56,11 @@ public class ZhengyanPlatformTool implements EnterpriseTool {
 
     @Override
     public String getDescription() {
-        return "统一调用正言平台能力。action可选img2text/professionalQa，body为对应接口请求体。";
+        return "统一调用正言平台能力。action可选img2text，body为对应接口请求体。";
     }
 
     @Override
-    public String execute(String params) {
+    public ToolResponse execute(String params) {
         try {
             JsonNode root = params == null || params.isBlank()
                     ? objectMapper.createObjectNode()
@@ -73,12 +70,11 @@ public class ZhengyanPlatformTool implements EnterpriseTool {
             String bodyJson = body.isMissingNode() ? "{}" : objectMapper.writeValueAsString(body);
 
             return switch (action) {
-                case "img2text" -> img2Text(bodyJson);
-                case "professionalQa", "professional-qa" -> professionalQa(bodyJson);
-                default -> "{\"success\":false,\"message\":\"action 必须是 img2text 或 professionalQa\"}";
+                case "img2text" -> ToolResponse.fromRawJson(img2Text(bodyJson));
+                default -> ToolResponse.failure("action 必须是 img2text");
             };
         } catch (Exception e) {
-            return "{\"success\":false,\"message\":\"参数格式错误: " + sanitize(e.getMessage()) + "\"}";
+            return ToolResponse.failure("参数格式错误: " + sanitize(e.getMessage()));
         }
     }
 
@@ -89,7 +85,7 @@ public class ZhengyanPlatformTool implements EnterpriseTool {
         try {
             ObjectNode body = buildImg2TextBody(params);
             String modelType = extractModelType(params, true);
-            log.info("[ZhengyanPlatformTool] 调用开始 action=img2text, endpoint={}, modelType={}, timeoutMs={}, authConfigured={}, appIdConfigured={}",
+            log.info("[ZhengyanPlatformTool] 调用开始 action=img2text,appId={}, endpoint={}, modelType={}, timeoutMs={}, authConfigured={}, appIdConfigured={}", appId,
                     img2TextEndpoint, safeValue(modelType), timeoutMs, hasAuth(), hasAppId());
             log.debug("[ZhengyanPlatformTool] 请求摘要 action=img2text, body={}", summarizeRequest("img2text", body));
             long start = System.currentTimeMillis();
@@ -100,28 +96,8 @@ public class ZhengyanPlatformTool implements EnterpriseTool {
             return buildUnifiedResponse("img2text", response.statusCode(), body, response.body(), "text");
         } catch (Exception e) {
             log.error("[ZhengyanPlatformTool] img2text 调用失败: {}", e.getMessage(), e);
-            return "{\"success\":false,\"message\":\"调用img2text失败: " + sanitize(e.getMessage()) + "\"}";
-        }
-    }
-
-    public String professionalQa(String params) {
-        if (!preCheck()) {
-            return checkError();
-        }
-        try {
-            ObjectNode body = buildProfessionalQaBody(params);
-            log.info("[ZhengyanPlatformTool] 调用开始 action=professionalQa, endpoint={}, timeoutMs={}, authConfigured={}, appIdConfigured={}",
-                    professionalQaEndpoint, timeoutMs, hasAuth(), hasAppId());
-            log.debug("[ZhengyanPlatformTool] 请求摘要 action=professionalQa, body={}", summarizeRequest("professionalQa", body));
-            long start = System.currentTimeMillis();
-            HttpResponse<String> response = postJson(professionalQaEndpoint, body, null);
-            long cost = System.currentTimeMillis() - start;
-            log.info("[ZhengyanPlatformTool] 调用完成 action=professionalQa, status={}, costMs={}", response.statusCode(), cost);
-            log.debug("[ZhengyanPlatformTool] 响应摘要 action=professionalQa, body={}", abbreviate(response.body(), 600));
-            return buildUnifiedResponse("professionalQa", response.statusCode(), body, response.body(), "answer");
-        } catch (Exception e) {
-            log.error("[ZhengyanPlatformTool] professionalQa 调用失败: {}", e.getMessage(), e);
-            return "{\"success\":false,\"message\":\"调用professionalQa失败: " + sanitize(e.getMessage()) + "\"}";
+            return ToolResponse.toJson(objectMapper,
+                    ToolResponse.failure("调用img2text失败: " + sanitize(e.getMessage())));
         }
     }
 
@@ -190,44 +166,6 @@ public class ZhengyanPlatformTool implements EnterpriseTool {
         return root;
     }
 
-    private ObjectNode buildProfessionalQaBody(String params) throws Exception {
-        JsonNode node = parseToNode(params);
-        String sessionId = node.path("session_id").asText("");
-        String input = node.path("input").asText("");
-        String botCode = node.path("bot_code").asText("");
-        if (sessionId.isBlank()) {
-            throw new IllegalArgumentException("session_id 不能为空");
-        }
-        if (input.isBlank()) {
-            throw new IllegalArgumentException("input 不能为空");
-        }
-        if (botCode.isBlank()) {
-            throw new IllegalArgumentException("bot_code 不能为空");
-        }
-        if (!node.has("user_info") || !node.get("user_info").isObject()) {
-            throw new IllegalArgumentException("user_info 不能为空");
-        }
-
-        ObjectNode root = objectMapper.createObjectNode();
-        root.put("session_id", sessionId);
-        root.put("input", input);
-        root.put("bot_code", botCode);
-        root.set("user_info", node.get("user_info"));
-        if (node.has("ext_model") && node.get("ext_model").isObject()) {
-            root.set("ext_model", node.get("ext_model"));
-        }
-        if (node.has("ext_fields") && node.get("ext_fields").isObject()) {
-            root.set("ext_fields", node.get("ext_fields"));
-        }
-        if (node.has("stream") && node.get("stream").isBoolean()) {
-            root.put("stream", node.get("stream").asBoolean());
-        }
-        if (node.has("is_return_docurl") && node.get("is_return_docurl").canConvertToInt()) {
-            root.put("is_return_docurl", node.get("is_return_docurl").asInt());
-        }
-        return root;
-    }
-
     private JsonNode parseToNode(String params) throws Exception {
         return params == null || params.isBlank()
                 ? objectMapper.createObjectNode()
@@ -275,15 +213,18 @@ public class ZhengyanPlatformTool implements EnterpriseTool {
 
     private String checkError() {
         if (!enabled) {
-            return "{\"success\":false,\"message\":\"正言平台工具未启用（eap.tools.zhengyan.platform.enabled=false）\"}";
+            return ToolResponse.toJson(objectMapper,
+                    ToolResponse.failure("正言平台工具未启用（eap.tools.zhengyan.platform.enabled=false）"));
         }
         if (authorization == null || authorization.isBlank()) {
-            return "{\"success\":false,\"message\":\"未配置Authorization（eap.tools.zhengyan.platform.authorization）\"}";
+            return ToolResponse.toJson(objectMapper,
+                    ToolResponse.failure("未配置Authorization（eap.tools.zhengyan.platform.authorization）"));
         }
         if (appId == null || appId.isBlank()) {
-            return "{\"success\":false,\"message\":\"未配置App-Id（eap.tools.zhengyan.platform.app-id）\"}";
+            return ToolResponse.toJson(objectMapper,
+                    ToolResponse.failure("未配置App-Id（eap.tools.zhengyan.platform.app-id）"));
         }
-        return "{\"success\":false,\"message\":\"配置不完整\"}";
+        return ToolResponse.toJson(objectMapper, ToolResponse.failure("配置不完整"));
     }
 
     private String sanitize(String msg) {
@@ -307,36 +248,9 @@ public class ZhengyanPlatformTool implements EnterpriseTool {
             ObjectNode summary = objectMapper.createObjectNode();
             if ("img2text".equals(action)) {
                 summary.put("messagesCount", body.path("messages").isArray() ? body.path("messages").size() : 0);
-                if (body.path("messages").isArray() && body.path("messages").size() > 0) {
-                    JsonNode firstMsg = body.path("messages").get(0);
-                    summary.put("firstRole", firstMsg.path("role").asText(""));
-                    JsonNode content = firstMsg.path("content");
-                    if (content.isArray()) {
-                        summary.put("firstContentCount", content.size());
-                        int imageParts = 0;
-                        int textParts = 0;
-                        int firstImageUrlLength = 0;
-                        String firstText = "";
-                        for (JsonNode part : content) {
-                            String type = part.path("type").asText("");
-                            if ("image_url".equals(type)) {
-                                imageParts++;
-                                if (firstImageUrlLength == 0) {
-                                    firstImageUrlLength = part.path("image_url").path("url").asText("").length();
-                                }
-                            } else if ("text".equals(type)) {
-                                textParts++;
-                                if (firstText.isBlank()) {
-                                    firstText = part.path("text").asText("");
-                                }
-                            }
-                        }
-                        summary.put("imageParts", imageParts);
-                        summary.put("textParts", textParts);
-                        summary.put("firstImageUrlLength", firstImageUrlLength);
-                        summary.put("firstText", abbreviate(firstText, 200));
-                    }
-                }
+                summary.put("imageParts", countContentParts(body.path("messages"), "image_url"));
+                summary.put("textParts", countContentParts(body.path("messages"), "text"));
+                summary.set("bodyMasked", maskImg2TextBody(body));
                 summary.set("user_info", body.path("user_info"));
                 summary.put("hasHistory", body.has("history"));
                 summary.put("hasExtModel", body.has("ext_model"));
@@ -355,6 +269,63 @@ public class ZhengyanPlatformTool implements EnterpriseTool {
         } catch (Exception e) {
             return "{\"summaryError\":\"" + sanitize(e.getMessage()) + "\"}";
         }
+    }
+
+    private int countContentParts(JsonNode messages, String typeName) {
+        int count = 0;
+        if (!messages.isArray()) {
+            return count;
+        }
+        for (JsonNode msg : messages) {
+            JsonNode content = msg.path("content");
+            if (!content.isArray()) {
+                continue;
+            }
+            for (JsonNode part : content) {
+                if (typeName.equals(part.path("type").asText(""))) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 以“原始请求结构”输出日志，仅对 base64 内容脱敏，便于和 curl 示例逐字段对照。
+     */
+    private ObjectNode maskImg2TextBody(ObjectNode body) {
+        ObjectNode masked = body.deepCopy();
+        JsonNode messages = masked.path("messages");
+        if (!messages.isArray()) {
+            return masked;
+        }
+        for (JsonNode msg : messages) {
+            JsonNode content = msg.path("content");
+            if (!content.isArray()) {
+                continue;
+            }
+            for (JsonNode part : content) {
+                if (!"image_url".equals(part.path("type").asText(""))) {
+                    continue;
+                }
+                JsonNode imageUrlNode = part.path("image_url");
+                if (!imageUrlNode.isObject()) {
+                    continue;
+                }
+                ObjectNode imageUrlObj = (ObjectNode) imageUrlNode;
+                String url = imageUrlObj.path("url").asText("");
+                String maskedUrl = "<omitted-base64>";
+                if (url.startsWith("data:")) {
+                    int commaIndex = url.indexOf(',');
+                    String prefix = commaIndex > 0 ? url.substring(0, commaIndex + 1) : "data:,";
+                    maskedUrl = prefix + "<omitted-base64>";
+                } else if (!url.isBlank()) {
+                    maskedUrl = abbreviate(url, 120);
+                }
+                imageUrlObj.put("url", maskedUrl);
+            }
+        }
+        return masked;
     }
 
     private String abbreviate(String s, int maxLen) {

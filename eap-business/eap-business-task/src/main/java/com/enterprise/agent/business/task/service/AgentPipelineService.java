@@ -73,6 +73,8 @@ public class AgentPipelineService {
                 if (reviewRetry > 0) {
                     log.warn("[Pipeline] 质量不达标，第 {} 次重试 Executor", reviewRetry);
                     context.getReviewIssues().clear();
+                    // 重试时状态需从 REVIEWING 回退至 EXECUTING，保持状态机一致
+                    updateStatus(taskId, TaskStatus.REVIEWING, TaskStatus.EXECUTING);
                 }
 
                 AgentResult executorResult = orchestrator.runAgent(AgentRole.EXECUTOR, context);
@@ -144,7 +146,7 @@ public class AgentPipelineService {
                 entity.setDescription(st.getDescription());
                 entity.setToolName(st.getToolName());
                 entity.setToolParams(st.getToolParams());
-                entity.setStatus(st.getStatus());
+                entity.setStatus(st.getStatus().name()); // SubTaskStatus 枚举转字符串写入数据库
                 subTasks.add(entity);
             }
             dataService.saveSubTasks(taskId, subTasks);

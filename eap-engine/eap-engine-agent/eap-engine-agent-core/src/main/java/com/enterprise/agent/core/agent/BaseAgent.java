@@ -51,7 +51,7 @@ public abstract class BaseAgent {
     }
 
     /**
-     * 带重试的 LLM 调用（最多 maxRetries 次）
+     * 带重试的 LLM 调用（最多 maxRetries 次，指数退避：1s → 2s → 4s …）
      */
     protected String callLlmWithRetry(String prompt, int maxRetries) {
         int attempts = 0;
@@ -65,7 +65,8 @@ public abstract class BaseAgent {
                 log.warn("[{}] LLM 调用失败，第 {}/{} 次重试: {}", getRole(), attempts, maxRetries, e.getMessage());
                 if (attempts < maxRetries) {
                     try {
-                        Thread.sleep(1000L * attempts); // 指数退避
+                        // 指数退避：第 1 次等 1s，第 2 次等 2s，第 3 次等 4s …
+                        Thread.sleep(1000L << (attempts - 1));
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                         break;

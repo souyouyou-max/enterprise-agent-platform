@@ -6,6 +6,8 @@ import com.enterprise.agent.tools.impl.SalesDataTool;
 import com.enterprise.agent.tools.impl.ZhengyanPlatformTool;
 import com.enterprise.agent.tools.impl.SqlGeneratorTool;
 import com.enterprise.agent.tools.impl.ZhengyanTextClassificationTool;
+import com.enterprise.agent.tools.impl.DazhiOcrTool;
+import com.enterprise.agent.common.core.response.ToolResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -34,6 +36,7 @@ public class ExecutorToolkit {
     private final SqlGeneratorTool sqlGeneratorTool;
     private final ZhengyanTextClassificationTool zhengyanTextClassificationTool;
     private final ZhengyanPlatformTool zhengyanPlatformTool;
+    private final DazhiOcrTool dazhiOcrTool;
     private final ObjectMapper objectMapper;
 
     /**
@@ -45,7 +48,7 @@ public class ExecutorToolkit {
     public String getSalesData(String department, String quarter) {
         log.info("[ExecutorToolkit] getSalesData, dept={}, quarter={}", department, quarter);
         String params = String.format("{\"department\":\"%s\",\"quarter\":\"%s\"}", department, quarter);
-        return salesDataTool.execute(params);
+        return salesDataTool.execute(params).toJsonString();
     }
 
     /**
@@ -56,7 +59,7 @@ public class ExecutorToolkit {
     public String getEmployeeInfo(String employeeId) {
         log.info("[ExecutorToolkit] getEmployeeInfo, id={}", employeeId);
         String params = String.format("{\"employeeId\":\"%s\"}", employeeId);
-        return employeeTool.execute(params);
+        return employeeTool.execute(params).toJsonString();
     }
 
     /**
@@ -67,7 +70,7 @@ public class ExecutorToolkit {
     public String queryCrmData(String customerId) {
         log.info("[ExecutorToolkit] queryCrmData, customerId={}", customerId);
         String params = String.format("{\"customerId\":\"%s\"}", customerId);
-        return crmTool.execute(params);
+        return crmTool.execute(params).toJsonString();
     }
 
     /**
@@ -78,7 +81,7 @@ public class ExecutorToolkit {
     public String generateSqlQuery(String question) {
         log.info("[ExecutorToolkit] generateSqlQuery, question={}", question.substring(0, Math.min(50, question.length())));
         String params = String.format("{\"question\":\"%s\"}", question.replace("\"", "\\\""));
-        return sqlGeneratorTool.execute(params);
+        return sqlGeneratorTool.execute(params).toJsonString();
     }
 
     /**
@@ -104,10 +107,11 @@ public class ExecutorToolkit {
             if (threshold != null) {
                 params.put("threshold", threshold);
             }
-            return zhengyanTextClassificationTool.execute(objectMapper.writeValueAsString(params));
+            return zhengyanTextClassificationTool.execute(objectMapper.writeValueAsString(params)).toJsonString();
         } catch (Exception e) {
             log.warn("[ExecutorToolkit] classifyTextSemantics 参数处理失败: {}", e.getMessage());
-            return "{\"success\":false,\"message\":\"参数格式错误，labelsJson应为JSON数组字符串\"}";
+            return ToolResponse.toJson(objectMapper,
+                    ToolResponse.failure("参数格式错误，labelsJson应为JSON数组字符串"));
         }
     }
 
@@ -127,28 +131,19 @@ public class ExecutorToolkit {
             return zhengyanPlatformTool.img2Text(objectMapper.writeValueAsString(params));
         } catch (Exception e) {
             log.warn("[ExecutorToolkit] img2Text 参数处理失败: {}", e.getMessage());
-            return "{\"success\":false,\"message\":\"参数格式错误，userInfoJson需为JSON对象\"}";
+            return ToolResponse.toJson(objectMapper,
+                    ToolResponse.failure("参数格式错误，userInfoJson需为JSON对象"));
         }
     }
 
     /**
-     * 正言专业问答
+     * 大智部通用OCR识别（generalRecognition）
      */
-    @Tool(description = "调用正言专业问答接口。输入sessionId、input、botCode、userInfoJson(含user_id/user_name/user_dept_name/user_company)。")
-    public String professionalQa(String sessionId, String input, String botCode, String userInfoJson) {
-        log.info("[ExecutorToolkit] professionalQa, sessionId={}, botCode={}", sessionId, botCode);
-        try {
-            ObjectNode params = objectMapper.createObjectNode();
-            params.put("session_id", sessionId == null ? "" : sessionId);
-            params.put("input", input == null ? "" : input);
-            params.put("bot_code", botCode == null ? "" : botCode);
-            JsonNode userInfo = objectMapper.readTree(userInfoJson == null ? "{}" : userInfoJson);
-            params.set("user_info", userInfo);
-            return zhengyanPlatformTool.professionalQa(objectMapper.writeValueAsString(params));
-        } catch (Exception e) {
-            log.warn("[ExecutorToolkit] professionalQa 参数处理失败: {}", e.getMessage());
-            return "{\"success\":false,\"message\":\"参数格式错误，userInfoJson需为JSON对象\"}";
-        }
+    @Tool(description = "调用大智部通用OCR识别接口，一般用于对话中读取图片/证件内容。" +
+            "requestJson为原始请求JSON字符串（与大智部接口约定一致），工具会自动补充businessNo和appCode。")
+    public String dazhiOcrGeneral(String requestJson) {
+        log.info("[ExecutorToolkit] dazhiOcrGeneral 调用");
+        return dazhiOcrTool.execute(requestJson == null ? "{}" : requestJson).toJsonString();
     }
 
     /**

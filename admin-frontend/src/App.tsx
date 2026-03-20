@@ -14,7 +14,31 @@ import ChatPage from '@/pages/Chat'
 
 export default function App() {
   return (
-    <AntdConfig locale={zhCN} theme={{ token: { colorPrimary: '#7c8ffc' } }}>
+    <AntdConfig
+      locale={zhCN}
+      theme={{
+        token: {
+          colorPrimary: '#4f6df5',
+          borderRadius: 12,
+          colorBgLayout: '#f5f8ff',
+          colorText: '#1f2937',
+        },
+        components: {
+          Card: {
+            borderRadiusLG: 16,
+            headerHeight: 56,
+          },
+          Button: {
+            borderRadius: 10,
+            controlHeight: 38,
+          },
+          Input: {
+            borderRadius: 10,
+            controlHeight: 38,
+          },
+        },
+      }}
+    >
       <ConfigProvider>
         <BrowserRouter>
           <MainLayout>

@@ -1,0 +1,57 @@
+.rootLayout {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f5f8ff 0%, #f2f5fb 100%);
+}
+
+.sider {
+  background: linear-gradient(180deg, #171b2e 0%, #151a2b 100%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.brand {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.brandTitle {
+  font-weight: 700;
+  color: #fff;
+  font-size: 15px;
+}
+
+.brandSubtitle {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 4px;
+}
+
+.menu {
+  background: transparent !important;
+  border-right: none !important;
+  padding-top: 6px;
+}
+
+.header {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  padding: 0 24px;
+  border-bottom: 1px solid #eaf0fb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+
+.headerTitle {
+  font-size: 17px;
+}
+
+.content {
+  padding: 20px;
+  overflow: auto;
+}
+
+.contentInner {
+  max-width: 1320px;
+  margin: 0 auto;
+}

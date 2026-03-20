@@ -1,5 +1,6 @@
 package com.enterprise.agent.tools.impl;
 
+import com.enterprise.agent.common.core.response.ToolResponse;
 import com.enterprise.agent.tools.EnterpriseTool;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,7 +37,7 @@ public class SalesDataTool implements EnterpriseTool {
     }
 
     @Override
-    public String execute(String params) {
+    public ToolResponse execute(String params) {
         log.info("[SalesDataTool] 执行查询, params={}", params);
         try {
             String department = "all";
@@ -48,10 +49,10 @@ public class SalesDataTool implements EnterpriseTool {
                 if (node.has("quarter")) quarter = node.get("quarter").asText();
             }
 
-            return generateSalesData(department, quarter);
+            return ToolResponse.fromRawJson(generateSalesData(department, quarter));
         } catch (Exception e) {
             log.error("[SalesDataTool] 执行失败: {}", e.getMessage());
-            return generateSalesData("all", "Q4-2024");
+            return ToolResponse.fromRawJson(generateSalesData("all", "Q4-2024"));
         }
     }
 

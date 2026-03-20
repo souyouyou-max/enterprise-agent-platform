@@ -6,94 +6,49 @@ server:
 spring:
   application:
     name: eap-app
-
-  # 当前不用 Nacos，关闭服务发现与注册，避免 401 导致启动失败
+  # Spring Boot 4.x 原生 Nacos 配置导入（不依赖 bootstrap 机制）
+  config:
+    import:
+      - optional:nacos:common.yml
+      - optional:nacos:eap-app.yml
   cloud:
     nacos:
+      config:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+        file-extension: yml
+        fail-fast: false
       discovery:
-        enabled: false
-
-  # 数据库（原 Nacos common.yml）
-  datasource:
-    url: jdbc:oceanbase:oracle://${DB_HOST:localhost}:${DB_PORT:2883}/AIPTEST?useSSL=false
-    username: ${DB_USERNAME:eap_user}
-    password: ${DB_PASSWORD:eap_password}
-    driver-class-name: com.oceanbase.jdbc.Driver
-    hikari:
-      maximum-pool-size: 20
-      minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 600000
-      initialization-fail-timeout: 1
-
-  # Redis
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      database: 0
-      timeout: 10000ms
-      connect-timeout: 5000ms
-      lettuce:
-        pool:
-          max-active: 16
-          max-idle: 8
-          min-idle: 0
-
-  # Kafka
-  kafka:
-    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      acks: all
-      retries: 3
-    consumer:
-      group-id: eap-app-consumer-group
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      auto-offset-reset: earliest
-      properties:
-        spring.json.trusted.packages: "com.enterprise.agent.*"
-
-  # AI 模型（原 Nacos common.yml）
-  ai:
-    openai:
-      api-key: sk-ZoXZvFwOV1btns8vZWNPvnc8NnsD3mvBmsHGFjis8TXEq83d
-      base-url: http://10.8.192.80:17500/ability/gpt
-      chat:
-        options:
-          model: qwen3-32b-com
-          temperature: 0.7
-        completions-path: /v2/chat/completions
-    chat:
-      observations:
-        include-error-logging: true
-        log-prompt: true
-        log-completion: true
-
-# MyBatis-Plus（原 Nacos common.yml）
-mybatis-plus:
-  configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-    map-underscore-to-camel-case: true
-  global-config:
-    db-config:
-      id-type: auto
-
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        enabled: ${NACOS_ENABLED:true}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+        fail-fast: false
 # 应用级配置（minio/security 使用 eap 前缀，与代码一致）
 eap:
+  business:
+    chat:
+      auto-ocr:
+        # autoOcr 调用方式：direct=直接调用工具Bean；agent=通过 ToolRegistry 统一入口调用
+        invoke-mode: direct
   llm:
     provider: openai
   tools:
     zhengyan:
       platform:
         enabled: true
-        timeout-ms: 20000
+        timeout-ms: 600000
+        convert:
+          mode: pure-java
+          max-pages: 200
+          dpi: 160
+        img2text:
+          max-images-per-call: 10
         # 通用 Header（两个接口共用）
         authorization: Bearer sk-NCq0CBb7uz4Fuw5Nax9ThkjNWvDIPmLrgr7P5ajjQGDe3bgA
-        app-id: ${ZHENGYAN_APP_ID:G209-test}
+        app-id: G209-test
         # img2text 可选模型类型: AzureGPT-4o / AzureGPT4-turbo-vision
         default-model-type: qwen2-5-vl-72b-com
         endpoints:
@@ -111,6 +66,22 @@ eap:
         # 若接口要求应用ID，可配置为对应 header（默认 X-App-Id）
         app-id: ${ZHENGYAN_APP_ID:}
         app-id-header: ${ZHENGYAN_APP_ID_HEADER:X-App-Id}
+    dazhi:
+      ocr:
+        # 是否启用大智部通用OCR工具 DazhiOcrTool
+        enabled: true
+        # 通用OCR识别地址，对应原 external.ocr.generalOcrUrl
+        general-url: https://bigdata-ocr-cluster.sinosig.com/general_recognition
+        # appCode，默认沿用原项目常量，可按环境覆盖
+        app-code: ${DAZHI_OCR_APP_CODE:G209-GHQ-CLM-JIHEFENGXIANJIQIREN}
+        # HTTP 请求超时时间（毫秒）
+        timeout-ms: ${DAZHI_OCR_TIMEOUT_MS:20000}
+  http:
+    # TCP 连接建立超时（毫秒），供 HttpClientConfig 使用
+    connect-timeout-ms: 5000
+    jackson:
+      # MVC @RequestBody 解析（tools.jackson）单字符串最大长度，如 attachments.base64
+      max-string-length: ${JACKSON_MAX_STRING_LENGTH:60000000}
   minio:
     enabled: true
     endpoint: http://localhost:9000
@@ -155,16 +126,10 @@ feign:
         read-timeout: 120000
 
 logging:
+  config: classpath:logback-spring.xml
+  # 日志目录（可通过环境变量覆盖）
+  # 对应 logback-spring.xml 中的 ${LOG_HOME}
+  # 生产部署示例：-DLOG_HOME=/var/log/eap
+  # 以下 level 仅作 IDE / 单元测试时的快速覆盖，正式级别由 logback-spring.xml 管理
   level:
-    com.enterprise.agent: DEBUG
-    org.springframework.ai: DEBUG
-    org.springframework.kafka: WARN
-    org.springframework.security: WARN
-    org.springframework.web.client: DEBUG
-    com.fasterxml.jackson.databind: DEBUG
-    org.springframework.ai.observation: DEBUG
-    org.springframework.ai.chat.client.advisor: DEBUG
-    reactor.netty.http.client: DEBUG
-    org.springframework.web.reactive.function.client: DEBUG
-  pattern:
-    console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    com.enterprise.agent: INFO

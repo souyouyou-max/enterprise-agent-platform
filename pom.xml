@@ -172,7 +172,7 @@
                 <version>${spring-cloud-alibaba.version}</version>
             </dependency>
 
-            <!-- Bootstrap Context（Spring Boot 3.x 需要显式引入） -->
+            <!-- Bootstrap Context：保留 4.1.4 以兼容 gateway/scheduler 模块；eap-app 改用 spring.config.import 加载 Nacos -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-starter-bootstrap</artifactId>

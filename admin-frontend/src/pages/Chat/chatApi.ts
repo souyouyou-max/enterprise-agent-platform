@@ -20,6 +20,11 @@ export type StreamChunkHandler = (chunk: string) => void
 export interface Img2TextPayload {
   text?: string
   image?: string
+  attachments?: Array<{
+    name: string
+    mimeType: string
+    base64: string
+  }>
   messages?: Array<{
     role: string
     content: Array<
@@ -116,5 +121,56 @@ export async function img2TextChat(baseUrl: string, payload: Img2TextPayload): P
     }
   }
   return '图片已上传，但未获取到可读文本结果。'
+}
+
+export async function autoOcrChat(baseUrl: string, payload: Img2TextPayload): Promise<string> {
+  const res = await apiFetch<any>(baseUrl, '/api/v1/enterprise/semantics/auto-ocr', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  const unwrapData = (value: any): any => {
+    let cur = value
+    for (let i = 0; i < 4; i += 1) {
+      if (cur && typeof cur === 'object' && cur.data && typeof cur.data === 'object') {
+        cur = cur.data
+      } else {
+        break
+      }
+    }
+    return cur ?? {}
+  }
+
+  const data = unwrapData(res.data)
+
+  // img2text 路径：后端统一返回 content 字段
+  if (data?.engine === 'img2text') {
+    const content = data?.content
+    if (typeof content === 'string' && content.trim()) {
+      return content
+    }
+  }
+
+  // dazhi-ocr / img2text 均在后端统一提取为 content 字段，直接取用
+  if (typeof data?.content === 'string' && data.content.trim()) {
+    return data.content.trim()
+  }
+
+  // 兜底：尝试从 data 或 result 中找可读文本
+  const candidates = [
+    data?.content,
+    data?.result,
+    data?.text,
+    res.data?.content,
+    res.data?.result,
+  ]
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate
+    }
+  }
+
+  return '文件已上传，但未获取到可读文本结果。'
 }
 

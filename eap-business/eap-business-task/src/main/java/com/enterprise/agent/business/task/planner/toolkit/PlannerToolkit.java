@@ -23,7 +23,7 @@ public class PlannerToolkit {
      * 将高层业务目标拆解为可执行子任务列表（JSON格式）
      */
     @Tool(description = "将用户的高层业务目标拆解为3-5个具体可执行的子任务，返回JSON数组，" +
-            "每项包含sequence、description、toolName(getSalesData/getEmployeeInfo/queryCrmData/generateSqlQuery/classifyTextSemantics/img2Text/professionalQa/none)、toolParams字段")
+            "每项包含sequence、description、toolName(getSalesData/getEmployeeInfo/queryCrmData/generateSqlQuery/classifyTextSemantics/img2Text/dazhiOcrGeneral/none)、toolParams字段")
     public String decomposeGoal(String goal) {
         log.info("[PlannerToolkit] decomposeGoal, goal={}", goal.substring(0, Math.min(50, goal.length())));
         String prompt = String.format("""
@@ -41,7 +41,7 @@ public class PlannerToolkit {
                 可用工具：getSalesData（部门+季度销售数据）、getEmployeeInfo（员工信息）、
                          queryCrmData（CRM客户数据）、generateSqlQuery（自然语言转SQL）、
                          classifyTextSemantics（语义文本分类）、img2Text（图片识别转文本）、
-                         professionalQa（专业知识问答）
+                         dazhiOcrGeneral（大智部通用OCR识别）
                 只输出JSON，不要包含其他文字。
                 """, goal);
         return llmService.simpleChat(prompt);
