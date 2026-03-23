@@ -1,13 +1,11 @@
 package com.enterprise.agent.common;
 
-import com.enterprise.agent.common.exception.GlobalExceptionHandler;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.context.annotation.Import;
 
 /**
- * eap-common 自动配置：向 Spring 容器注册统一全局异常处理器
+ * eap-common 自动配置入口（保留扩展点）。
+ * GlobalExceptionHandler 已迁移至 eap-app 的 @ComponentScan 扫描范围，无需在此 @Import。
  */
 @AutoConfiguration
-@Import(GlobalExceptionHandler.class)
 public class EapCommonAutoConfiguration {
 }

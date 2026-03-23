@@ -72,10 +72,16 @@ public class OcrFileSplit {
     private String prompt;
 
     /**
-     * 本分片的OCR识别结果文本
+     * 本分片的 OCR 识别结果文本（大智部等引擎）
      */
     @TableField("ocr_result")
     private String ocrResult;
+
+    /**
+     * 本分片大模型/多模态（正言 img2text）识别正文，与 {@link #ocrResult} 分列存储。
+     */
+    @TableField("llm_result")
+    private String llmResult;
 
     /**
      * 该分片使用的图片 base64（排查/重跑用）。

@@ -4,6 +4,9 @@ spring:
   cloud:
     nacos:
       config:
+        # 本地开发默认关闭 Nacos 配置拉取，避免覆盖本地 application.yml 路由导致 404。
+        # 线上/联调如需启用，设置 NACOS_CONFIG_ENABLED=true。
+        enabled: ${NACOS_CONFIG_ENABLED:true}
         server-addr: ${NACOS_ADDR:localhost:8848}
         username: ${NACOS_USERNAME:nacos}
         password: ${NACOS_PASSWORD:nacos}

@@ -1,10 +1,69 @@
 from __future__ import annotations
 
 import difflib
+import hashlib
 from dataclasses import dataclass
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
+# ── 文件整体相似度（文件级直接对比）──────────────────────────
+
+_DHASH_BITS = 256   # 与 parse.py 保持一致
+
+
+def compare_file_bytes_direct(
+    sha256_a: str,
+    sha256_b: str,
+    size_a: int,
+    size_b: int,
+    page_hashes_a: list[int] | None = None,
+    page_hashes_b: list[int] | None = None,
+) -> dict:
+    """
+    文件级整体相似度：先做 SHA-256 完全比对，再做视觉哈希均值（如有 PDF/图片 dHash）。
+
+    参数说明：
+      sha256_a / sha256_b  —— 文件的 SHA-256 十六进制字符串
+      size_a / size_b      —— 文件字节大小
+      page_hashes_a/b      —— 可选；PDF 或图片的感知哈希整数列表（来自 compute_pdf_page_hashes / compute_image_hash）
+
+    返回字段：
+      exactMatch   —— 两文件完全相同
+      sizeMatch    —— 文件大小相同
+      sha256A/B    —— 各自摘要（便于日志追溯）
+      visualSim    —— 视觉哈希平均相似度（0~1），无哈希时为 null
+    """
+    exact = sha256_a == sha256_b
+    size_match = size_a == size_b
+
+    result: dict = {
+        "ok": True,
+        "exactMatch": exact,
+        "sizeMatch": size_match,
+        "sha256A": sha256_a,
+        "sha256B": sha256_b,
+        "sizeA": size_a,
+        "sizeB": size_b,
+        "visualSim": None,
+    }
+
+    if exact:
+        result["visualSim"] = 1.0
+        return result
+
+    # 视觉哈希均值相似度（PDF 多页 or 单图）
+    if page_hashes_a and page_hashes_b:
+        sims: list[float] = []
+        for ha in page_hashes_a:
+            best = max(
+                1.0 - bin(ha ^ hb).count("1") / _DHASH_BITS
+                for hb in page_hashes_b
+            )
+            sims.append(best)
+        result["visualSim"] = round(sum(sims) / len(sims), 4)
+
+    return result
 
 
 def _normalize(s: str) -> str:

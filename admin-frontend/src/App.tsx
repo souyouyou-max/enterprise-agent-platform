@@ -12,6 +12,7 @@ import CompareBase64Page from '@/pages/CompareBase64'
 import DiffViewerPage from '@/pages/DiffViewer'
 import ChatPage from '@/pages/Chat'
 import OcrPreviewPage from '@/pages/OcrPreview'
+import OcrPipelinePage from '@/pages/OcrPipeline'
 
 export default function App() {
   return (
@@ -54,6 +55,7 @@ export default function App() {
               <Route path="/diff-viewer" element={<DiffViewerPage />} />
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/ocr-preview" element={<OcrPreviewPage />} />
+              <Route path="/ocr-pipeline" element={<OcrPipelinePage />} />
             </Routes>
           </MainLayout>
         </BrowserRouter>

@@ -80,6 +80,11 @@ public interface OcrFileDataService {
      */
     void saveSplitResult(Long splitId, Long mainId, String prompt, String ocrResult);
 
+    /**
+     * 回写分片级大模型/多模态识别结果（仅更新 {@code llm_result}，不修改 {@code ocr_result} 与 OCR 聚合逻辑）。
+     */
+    void saveSplitLlmResult(Long splitId, Long mainId, String llmResult);
+
     /** 标记单分片失败，同步将主文件标记为 FAILED */
     void markSplitFailed(Long splitId, Long mainId, String errorMessage);
 
@@ -93,4 +98,29 @@ public interface OcrFileDataService {
 
     /** 重置主文件及其分片，status→PENDING，用于重试场景 */
     void resetForReprocess(Long mainId);
+
+    // ── 批次维度查询（Pipeline 使用）────────────────────────────
+
+    /** 查询同一批次下的所有主文件记录 */
+    List<OcrFileMain> findMainByBatchNo(String batchNo);
+
+    /** 统计批次中指定 ocr_status 的文件数 */
+    long countMainByBatchAndOcrStatus(String batchNo, String ocrStatus);
+
+    /** 统计批次中指定 analysis_status 的文件数 */
+    long countMainByBatchAndAnalysisStatus(String batchNo, String analysisStatus);
+
+    // ── 多模态分析状态更新 ────────────────────────────────────────
+
+    /** 将主文件的 analysis_status 更新为 PROCESSING */
+    void markAnalysisProcessing(Long mainId);
+
+    /** 将主文件的 analysis_status 更新为 SUCCESS */
+    void markAnalysisSuccess(Long mainId);
+
+    /** 将主文件的 analysis_status 更新为 FAILED */
+    void markAnalysisFailed(Long mainId, String errorMessage);
+
+    /** 将主文件的 analysis_status 更新为 SKIPPED（无图片内容时） */
+    void markAnalysisSkipped(Long mainId);
 }

@@ -17,8 +17,8 @@ function nowHm(ts: number) {
 }
 
 export default function ChatPage() {
-  const [javaUrl, setJavaUrl] = useState('http://localhost:8081')
-  const [urlInput, setUrlInput] = useState('http://localhost:8081')
+  const [javaUrl, setJavaUrl] = useState('http://localhost:8079')
+  const [urlInput, setUrlInput] = useState('http://localhost:8079')
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -201,7 +201,7 @@ export default function ChatPage() {
                 value={urlInput}
                 onChange={e => setUrlInput(e.target.value)}
                 onPressEnter={applyUrl}
-                placeholder="http://localhost:8081"
+                placeholder="http://localhost:8079"
                 style={{ width: 320 }}
                 size="small"
                 prefix={<LinkOutlined />}

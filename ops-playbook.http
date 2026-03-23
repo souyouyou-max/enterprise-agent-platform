@@ -1,0 +1,109 @@
+### Ops Playbook API 验证脚本
+### 使用方式：
+### 1) 在 IDE 中打开本文件
+### 2) 按顺序点击每个请求上方的 "Run"
+### 3) 若启用鉴权，请在 Authorization 里填入 Bearer Token
+
+@baseUrl = http://localhost:8079
+@contentType = application/json
+@batchNo = BATCH_20260323154550_3D693F7D
+@dataId = eap-app.yml
+@group = DEFAULT_GROUP
+@namespace =
+@submitter = ops_user
+@ticketNo = OPS-TEST-001
+@approver = ops_admin
+
+### 1) 批次诊断
+POST {{baseUrl}}/api/v1/ops/pipeline/diagnose
+Content-Type: {{contentType}}
+
+{
+  "batchNo": "{{batchNo}}"
+}
+
+### 2) 配置预检（extraInfo 合并后）
+POST {{baseUrl}}/api/v1/ops/config/precheck
+Content-Type: {{contentType}}
+
+{
+  "extraInfo": "{\"analysisEnabled\":true,\"maxImagesPerFile\":1,\"maxTotalAnalysisPages\":100}"
+}
+
+### 3) 生成变更计划（MCP 关闭时 nacosContext 可能不可用，属于预期）
+POST {{baseUrl}}/api/v1/ops/config/change-plan
+Content-Type: {{contentType}}
+
+{
+  "namespace": "{{namespace}}",
+  "group": "{{group}}",
+  "dataId": "{{dataId}}",
+  "extraInfo": "{\"analysisEnabled\":true}",
+  "proposedChanges": {
+    "eap.pipeline.analysis.max-images-per-file": 1,
+    "eap.pipeline.scheduler.interval-ms": 60000
+  }
+}
+
+### 4) 变更计划（反例：白名单外键，预期 decision=REJECT）
+POST {{baseUrl}}/api/v1/ops/config/change-plan
+Content-Type: {{contentType}}
+
+{
+  "namespace": "{{namespace}}",
+  "group": "{{group}}",
+  "dataId": "{{dataId}}",
+  "extraInfo": "{\"analysisEnabled\":true}",
+  "proposedChanges": {
+    "eap.pipeline.analysis.not-allowed-key": 123
+  }
+}
+
+### 5) 提交审批（正例）
+### 说明：从响应中复制 planId，填到下一条请求
+POST {{baseUrl}}/api/v1/ops/config/submit-approval
+Content-Type: {{contentType}}
+
+{
+  "namespace": "{{namespace}}",
+  "group": "{{group}}",
+  "dataId": "{{dataId}}",
+  "extraInfo": "{\"analysisEnabled\":true}",
+  "proposedChanges": {
+    "eap.pipeline.analysis.max-images-per-file": 1
+  },
+  "submitter": "{{submitter}}",
+  "ticketNo": "{{ticketNo}}"
+}
+
+### 6) 审批发布（将 <PLAN_ID> 替换为上一步返回的 planId）
+POST {{baseUrl}}/api/v1/ops/config/approve-publish
+Content-Type: {{contentType}}
+
+{
+  "planId": "<PLAN_ID>",
+  "approver": "{{approver}}",
+  "comment": "test publish"
+}
+
+### 7) 提交审批（反例：越界值，预期 status=REJECTED）
+POST {{baseUrl}}/api/v1/ops/config/submit-approval
+Content-Type: {{contentType}}
+
+{
+  "namespace": "{{namespace}}",
+  "group": "{{group}}",
+  "dataId": "{{dataId}}",
+  "extraInfo": "{\"analysisEnabled\":true}",
+  "proposedChanges": {
+    "eap.pipeline.analysis.max-images-per-file": 999
+  },
+  "submitter": "{{submitter}}",
+  "ticketNo": "OPS-TEST-002"
+}
+
+### 8) MCP 启用后建议再执行第 3、5、6 步
+### 环境变量示例（重启应用后生效）：
+### OPS_NACOS_MCP_ENABLED=true
+### OPS_NACOS_MCP_BASE_URL=http://127.0.0.1:18080
+### OPS_NACOS_MCP_TOKEN=<your-token-if-needed>

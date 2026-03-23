@@ -19,6 +19,8 @@
         <module>eap-business-task</module>
         <module>eap-business-screening</module>
         <module>eap-business-report</module>
+        <module>eap-business-auditing</module>
+        <module>eap-business-pipeline</module>
         <module>eap-business-chat</module>
     </modules>
 </project>

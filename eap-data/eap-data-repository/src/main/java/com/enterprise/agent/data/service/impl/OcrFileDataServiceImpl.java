@@ -169,6 +169,15 @@ public class OcrFileDataServiceImpl implements OcrFileDataService {
 
     @Override
     @Transactional
+    public void saveSplitLlmResult(Long splitId, Long mainId, String llmResult) {
+        splitMapper.update(new LambdaUpdateWrapper<OcrFileSplit>()
+                .eq(OcrFileSplit::getId, splitId)
+                .set(OcrFileSplit::getLlmResult, llmResult));
+        log.info("[OcrFile] 分片大模型结果已保存, splitId={}, mainId={}", splitId, mainId);
+    }
+
+    @Override
+    @Transactional
     public void markSplitFailed(Long splitId, Long mainId, String errorMessage) {
         splitMapper.update(new LambdaUpdateWrapper<OcrFileSplit>()
                 .eq(OcrFileSplit::getId, splitId)
@@ -204,10 +213,74 @@ public class OcrFileDataServiceImpl implements OcrFileDataService {
         mainMapper.update(new LambdaUpdateWrapper<OcrFileMain>()
                 .eq(OcrFileMain::getId, mainId)
                 .set(OcrFileMain::getOcrStatus, STATUS_PENDING)
+                .set(OcrFileMain::getAnalysisStatus, STATUS_PENDING)
                 .set(OcrFileMain::getErrorMessage, null)
                 .set(OcrFileMain::getOcrResult, null)
                 .set(OcrFileMain::getTotalPages, 0));
         log.info("[OcrFile] 主文件已重置以便重新处理, mainId={}", mainId);
+    }
+
+    // ── 批次维度查询 ─────────────────────────────────────────────
+
+    @Override
+    public List<OcrFileMain> findMainByBatchNo(String batchNo) {
+        return mainMapper.selectList(new LambdaQueryWrapper<OcrFileMain>()
+                .eq(OcrFileMain::getBatchNo, batchNo)
+                .orderByAsc(OcrFileMain::getCreatedAt));
+    }
+
+    @Override
+    public long countMainByBatchAndOcrStatus(String batchNo, String ocrStatus) {
+        return mainMapper.selectCount(new LambdaQueryWrapper<OcrFileMain>()
+                .eq(OcrFileMain::getBatchNo, batchNo)
+                .eq(OcrFileMain::getOcrStatus, ocrStatus));
+    }
+
+    @Override
+    public long countMainByBatchAndAnalysisStatus(String batchNo, String analysisStatus) {
+        return mainMapper.selectCount(new LambdaQueryWrapper<OcrFileMain>()
+                .eq(OcrFileMain::getBatchNo, batchNo)
+                .eq(OcrFileMain::getAnalysisStatus, analysisStatus));
+    }
+
+    // ── 多模态分析状态更新 ────────────────────────────────────────
+
+    @Override
+    public void markAnalysisProcessing(Long mainId) {
+        mainMapper.update(new LambdaUpdateWrapper<OcrFileMain>()
+                .eq(OcrFileMain::getId, mainId)
+                .set(OcrFileMain::getAnalysisStatus, "PROCESSING"));
+        log.info("[OcrFile] 多模态分析开始, mainId={}", mainId);
+    }
+
+    @Override
+    public void markAnalysisSuccess(Long mainId) {
+        mainMapper.update(new LambdaUpdateWrapper<OcrFileMain>()
+                .eq(OcrFileMain::getId, mainId)
+                .set(OcrFileMain::getAnalysisStatus, STATUS_SUCCESS));
+        log.info("[OcrFile] 多模态分析完成, mainId={}", mainId);
+    }
+
+    @Override
+    public void markAnalysisFailed(Long mainId, String errorMessage) {
+        mainMapper.update(new LambdaUpdateWrapper<OcrFileMain>()
+                .eq(OcrFileMain::getId, mainId)
+                .set(OcrFileMain::getAnalysisStatus, STATUS_FAILED)
+                .set(OcrFileMain::getErrorMessage, truncate(errorMessage, 900)));
+        log.warn("[OcrFile] 多模态分析失败, mainId={}, error={}", mainId, errorMessage);
+    }
+
+    @Override
+    public void markAnalysisSkipped(Long mainId) {
+        mainMapper.update(new LambdaUpdateWrapper<OcrFileMain>()
+                .eq(OcrFileMain::getId, mainId)
+                .set(OcrFileMain::getAnalysisStatus, "SKIPPED"));
+        log.info("[OcrFile] 多模态分析跳过（无图片内容）, mainId={}", mainId);
+    }
+
+    private String truncate(String s, int max) {
+        if (s == null) return null;
+        return s.length() <= max ? s : s.substring(0, max);
     }
 
     // ── 内部：分片聚合 ───────────────────────────────────────────

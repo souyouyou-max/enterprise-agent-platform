@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.enterprise.agent</groupId>
-        <artifactId>enterprise-agent-platform</artifactId>
+        <artifactId>eap-business</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>eap-business-chat</artifactId>
@@ -34,31 +34,12 @@
         </dependency>
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-engine-llm</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
             <artifactId>eap-engine-rag</artifactId>
         </dependency>
+        <!-- 稽核业务 Agent（线索发现/风险透视/监测预警） -->
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-engine-agent-clue</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-engine-agent-risk</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-engine-agent-monitor</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-business-screening</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-model-openai</artifactId>
+            <artifactId>eap-business-auditing</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -70,24 +51,17 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
         <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>pdfbox</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
         </dependency>
     </dependencies>
 </project>

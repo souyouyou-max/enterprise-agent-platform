@@ -1,9 +1,9 @@
 package com.enterprise.agent.business.chat;
 
-import com.enterprise.agent.dataservice.insight.model.InsightResult;
-import com.enterprise.agent.dataservice.insight.service.DataQueryService;
-import com.enterprise.agent.dataservice.insight.service.InsightAnalysisService;
-import com.enterprise.agent.dataservice.insight.service.NlToSqlService;
+import com.enterprise.agent.engine.rag.insight.model.InsightResult;
+import com.enterprise.agent.engine.rag.insight.service.DataQueryService;
+import com.enterprise.agent.engine.rag.insight.service.InsightAnalysisService;
+import com.enterprise.agent.engine.rag.insight.service.NlToSqlService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

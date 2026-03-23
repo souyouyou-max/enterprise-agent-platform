@@ -135,21 +135,6 @@
                 <artifactId>eap-engine-agent-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-engine-agent-clue</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-engine-agent-risk</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-engine-agent-monitor</artifactId>
-                <version>${project.version}</version>
-            </dependency>
             <!-- 内部模块 - 业务层 -->
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
@@ -164,6 +149,16 @@
             <dependency>
                 <groupId>com.enterprise.agent</groupId>
                 <artifactId>eap-business-report</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.enterprise.agent</groupId>
+                <artifactId>eap-business-auditing</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.enterprise.agent</groupId>
+                <artifactId>eap-business-pipeline</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -269,6 +264,8 @@
                     <configuration>
                         <source>${java.version}</source>
                         <target>${java.version}</target>
+                        <!-- 保留方法形参名，便于 Spring MVC / 反射与调试 -->
+                        <parameters>true</parameters>
                         <annotationProcessorPaths>
                             <path>
                                 <groupId>org.projectlombok</groupId>

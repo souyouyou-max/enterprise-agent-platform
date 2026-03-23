@@ -1,5 +1,6 @@
 package com.enterprise.agent.business.chat;
 
+import com.enterprise.agent.business.chat.config.EapChatProperties;
 import com.enterprise.agent.business.chat.toolkit.AgentOrchestrationToolkit;
 import com.enterprise.agent.business.chat.toolkit.ConversationOcrToolkit;
 import com.enterprise.agent.common.ai.service.LlmService;
@@ -11,12 +12,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -52,16 +53,19 @@ public class InteractionCenterAgent extends BaseAgent {
     private final AgentOrchestrationToolkit orchestrationToolkit;
     private final ConversationOcrToolkit conversationOcrToolkit;
     private final ChatClient advisorChatClient;
+    private final EapChatProperties chatProperties;
 
     public InteractionCenterAgent(LlmService llmService,
                                   ChatModel chatModel,
-                                  AgentOrchestrationToolkit orchestrationToolkit,
+                                  @Lazy AgentOrchestrationToolkit orchestrationToolkit,
                                   ConversationOcrToolkit conversationOcrToolkit,
-                                  @Qualifier("advisorChatClient") ChatClient advisorChatClient) {
+                                  @Qualifier("advisorChatClient") ChatClient advisorChatClient,
+                                  EapChatProperties chatProperties) {
         super(llmService, chatModel);
         this.orchestrationToolkit = orchestrationToolkit;
         this.conversationOcrToolkit = conversationOcrToolkit;
         this.advisorChatClient = advisorChatClient;
+        this.chatProperties = chatProperties;
         log.info("[InteractionCenter] 初始化完成，ChatModel 类型: {}", chatModel.getClass().getSimpleName());
         if (chatModel instanceof org.springframework.ai.openai.OpenAiChatModel openAiModel) {
             try {
@@ -228,6 +232,8 @@ public class InteractionCenterAgent extends BaseAgent {
 
     /**
      * 仅在明显是业务编排诉求时启用工具，避免普通闲聊被工具说明干扰。
+     * <p>
+     * 关键词列表由 {@code eap.pipeline.chat.org-tool-keywords} 配置，支持 Nacos 动态刷新。
      */
     private boolean shouldUseTools(String message) {
         if (message == null || message.isBlank()) {
@@ -236,10 +242,7 @@ public class InteractionCenterAgent extends BaseAgent {
         if (message.matches(".*\\b\\d{6,}\\b.*")) {
             return true;
         }
-        List<String> keywords = Arrays.asList(
-                "orgcode", "机构", "风控", "风险", "监测", "监控", "线索", "疑点", "告警",
-                "analysis", "analyze", "monitor", "clue"
-        );
+        List<String> keywords = chatProperties.getOrgToolKeywords();
         String lower = message.toLowerCase();
         return keywords.stream().anyMatch(lower::contains);
     }

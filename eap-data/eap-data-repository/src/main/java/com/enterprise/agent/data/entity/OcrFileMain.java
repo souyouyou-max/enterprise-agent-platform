@@ -30,6 +30,13 @@ public class OcrFileMain {
     private String businessNo;
 
     /**
+     * 批次流水号：同一次多文件上传共用同一 batch_no，关联 ocr_pipeline_batch.batch_no。
+     * 单文件独立请求时可为 NULL。
+     */
+    @TableField("batch_no")
+    private String batchNo;
+
+    /**
      * OCR来源类型：DAZHI_OCR（大智部）/ ZHENGYAN_MULTIMODAL（正言多模态）
      */
     @TableField("source")
@@ -65,6 +72,13 @@ public class OcrFileMain {
      */
     @TableField("ocr_status")
     private String ocrStatus;
+
+    /**
+     * 多模态语义分析状态：PENDING / PROCESSING / SUCCESS / FAILED / SKIPPED。
+     * 在 OCR 完成后由流水线触发正言大模型分析时更新。
+     */
+    @TableField("analysis_status")
+    private String analysisStatus;
 
     /**
      * 总页数/总分片数（拆分后写入）

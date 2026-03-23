@@ -24,8 +24,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from app.services.parse import parse_upload_to_text, warmup_ocr, compute_pdf_page_hashes
-from app.services.similarity import compare_texts_dual, compare_page_hashes, overall_risk
+from app.services.parse import (
+    parse_upload_to_text, warmup_ocr, compute_pdf_page_hashes,
+    compute_image_hash, _is_image_ext,
+)
+from app.services.similarity import (
+    compare_texts_dual, compare_page_hashes, overall_risk,
+    compare_file_bytes_direct,
+)
 from app.services.price_patterns import analyze_price_patterns
 
 
@@ -156,7 +162,7 @@ def analyze_compare_base64(req: CompareBase64Request):
         data = base64.b64decode(f.content_b64)
         sizes.append(len(data))
         sha256s.append(hashlib.sha256(data).hexdigest())
-        from app.services.parse import _parse_pdf_bytes, _parse_docx_bytes, _bytes_to_text
+        from app.services.parse import _parse_pdf_bytes, _parse_docx_bytes, _bytes_to_text, _parse_image_bytes
         low = f.filename.lower()
         if low.endswith(".pdf"):
             texts.append(_parse_pdf_bytes(data))
@@ -164,6 +170,10 @@ def analyze_compare_base64(req: CompareBase64Request):
         elif low.endswith(".docx"):
             texts.append(_parse_docx_bytes(data))
             page_hashes.append([])
+        elif _is_image_ext(low):
+            texts.append(_parse_image_bytes(data))
+            # 单张图片视为 1 页，用 dHash 作为页哈希
+            page_hashes.append([compute_image_hash(data)])
         else:
             texts.append(_bytes_to_text(data))
             page_hashes.append([])
@@ -198,11 +208,20 @@ def analyze_compare_base64(req: CompareBase64Request):
         for j in range(i + 1, n):
             res = compare_texts_dual(texts[i], texts[j])
             visual = compare_page_hashes(page_hashes[i], page_hashes[j])
+            file_sim = compare_file_bytes_direct(
+                sha256_a=sha256s[i],
+                sha256_b=sha256s[j],
+                size_a=sizes[i],
+                size_b=sizes[j],
+                page_hashes_a=page_hashes[i] or None,
+                page_hashes_b=page_hashes[j] or None,
+            )
             comparisons.append({
                 "a": names[i],
                 "b": names[j],
                 "result": res,
                 "visualSimilarity": visual,
+                "fileSimilarity": file_sim,
             })
 
             if isinstance(res, dict) and res.get("ok") is True:

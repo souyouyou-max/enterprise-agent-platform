@@ -12,7 +12,7 @@
 
     <artifactId>eap-engine-llm</artifactId>
     <name>EAP Engine LLM</name>
-    <description>引擎层-LLM：Spring AI 多模型热切换 + Redis 缓存（TTL 1h）</description>
+    <description>引擎层-LLM：Spring AI 多模型热切换 + @Cacheable LLM 响应缓存</description>
 
     <dependencies>
         <dependency>
@@ -32,21 +32,7 @@
           无需对可选 starter 中的类有任何字节码级引用。
           需要切换 provider 时，在 eap-app/pom.xml 引入对应 starter 即可。
         -->
-        <!-- Jackson (RedisConfig 序列化依赖) -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-        </dependency>
-
-        <!-- Redis Cache -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
+        <!-- @Cacheable 注解支持（CacheManager bean 由 eap-app 的 RedisConfig 提供） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-cache</artifactId>

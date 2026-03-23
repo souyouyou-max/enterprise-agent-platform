@@ -1,6 +1,7 @@
 package com.enterprise.agent.business.chat.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Slf4j
 @Configuration
+@EnableConfigurationProperties(EapChatProperties.class)
 public class ChatClientConfig {
 
     @Bean

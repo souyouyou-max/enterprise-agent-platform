@@ -89,9 +89,9 @@ public class AuditEngineService {
             }
         }
 
-        // 批量写入疑点结果表
-        for (ClueResult clue : allClues) {
-            clueResultMapper.insert(clue);
+        // 批量写入疑点结果表（避免循环单条 insert，减少 DB 往返次数）
+        if (!allClues.isEmpty()) {
+            clueResultMapper.insertBatch(allClues);
         }
 
         log.info("[审计引擎] 申请[{}]规则检测完成，共发现{}条疑点线索", applyCode, allClues.size());

@@ -25,6 +25,13 @@ _page_executor = ThreadPoolExecutor(max_workers=int(os.getenv("OCR_WORKERS", "4"
 _engine_lock = threading.Lock()
 
 
+_IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif", ".webp")
+
+
+def _is_image_ext(name: str) -> bool:
+    return any(name.endswith(ext) for ext in _IMAGE_EXTS)
+
+
 async def parse_upload_to_text(f: UploadFile) -> str:
     data = await f.read()
     name = (f.filename or "").lower()
@@ -36,6 +43,8 @@ async def parse_upload_to_text(f: UploadFile) -> str:
     elif name.endswith(".doc"):
         t = parse_doc_bytes(data)
         text = t if t else _bytes_to_text(data)
+    elif _is_image_ext(name):
+        text = _parse_image_bytes(data)
     else:
         text = _bytes_to_text(data)
     text_norm_len = len("".join(text.split()))
@@ -57,6 +66,8 @@ def _detect_method(name: str) -> str:
         return "docx"
     if name.endswith(".doc"):
         return "doc(legacy)"
+    if _is_image_ext(name):
+        return "image(ocr)"
     return "text"
 
 
@@ -255,6 +266,75 @@ def _parse_docx_bytes(data: bytes) -> str:
         if para.text:
             parts.append(para.text)
     return "\n".join(parts).strip()
+
+
+def _parse_image_bytes(data: bytes) -> str:
+    """使用 RapidOCR 对图片做文字识别，返回识别文本。"""
+    key = hashlib.sha256(data).hexdigest()
+    with _ocr_cache_lock:
+        if key in _ocr_cache:
+            logger.info("image OCR cache hit sha256=%s", key[:12])
+            return _ocr_cache[key]
+
+    try:
+        import numpy as np
+        from PIL import Image
+    except Exception as e:
+        logger.warning("image OCR dependencies not available: %s", e)
+        return ""
+
+    try:
+        img = Image.open(io.BytesIO(data)).convert("RGB")
+        arr = np.array(img)
+    except Exception as e:
+        logger.warning("image open failed: %s", e)
+        return ""
+
+    max_img_size = int(os.getenv("OCR_MAX_IMAGE_SIZE", "4000"))
+    if max_img_size > 0:
+        h, w = arr.shape[:2]
+        max_side = max(h, w)
+        if max_side > max_img_size:
+            scale = max_img_size / max_side
+            new_h, new_w = int(h * scale), int(w * scale)
+            arr = np.array(Image.fromarray(arr).resize((new_w, new_h), Image.LANCZOS))
+            logger.info("image resized %dx%d -> %dx%d", w, h, new_w, new_h)
+
+    try:
+        engine = _get_rapidocr()
+        result, _ = engine(arr)
+        text = "\n".join(line[1] for line in result) if result else ""
+    except Exception as e:
+        logger.warning("image OCR failed: %s", e)
+        text = ""
+
+    oneline = " ".join(text.split())
+    logger.info("image OCR done textLen=%d content=%s", len(oneline),
+                (oneline[:300] + "...") if len(oneline) > 300 else oneline)
+
+    with _ocr_cache_lock:
+        _ocr_cache[key] = text
+    return text
+
+
+def compute_image_hash(data: bytes) -> int:
+    """对图片计算 dHash，用于图片级视觉相似度对比。"""
+    try:
+        import numpy as np
+        from PIL import Image
+    except Exception as e:
+        logger.warning("image hash dependencies not available: %s", e)
+        return 0
+
+    try:
+        size = _DHASH_SIZE
+        img = Image.open(io.BytesIO(data)).convert("L").resize((size + 1, size), Image.LANCZOS)
+        pixels = np.array(img, dtype=float)
+        diff = pixels[:, :-1] > pixels[:, 1:]
+        return int(sum(int(b) << idx for idx, b in enumerate(diff.flatten())))
+    except Exception as e:
+        logger.warning("image hash failed: %s", e)
+        return 0
 
 
 def _bytes_to_text(data: bytes) -> str:

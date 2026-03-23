@@ -32,12 +32,14 @@
             <groupId>com.enterprise.agent</groupId>
             <artifactId>eap-business-chat</artifactId>
         </dependency>
-        <!-- 显式依赖：保证主应用运行时类路径含 eap-data-repository（含 DazhiOcrTool 等），避免 IDEA/增量编译偶发缺类 -->
         <dependency>
             <groupId>com.enterprise.agent</groupId>
-            <artifactId>eap-data-repository</artifactId>
+            <artifactId>eap-business-pipeline</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>com.enterprise.agent</groupId>
+            <artifactId>eap-business-auditing</artifactId>
+        </dependency>
         <!-- ── Spring Boot Web/Security/Actuator ── -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

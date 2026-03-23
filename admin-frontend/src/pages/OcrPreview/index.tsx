@@ -12,6 +12,7 @@ import {
   Tag,
   Typography,
 } from 'antd'
+import { LeftOutlined, RightOutlined, RotateLeftOutlined, RotateRightOutlined } from '@ant-design/icons'
 import type { TableProps } from 'antd'
 import { apiFetch } from '@/api/client'
 
@@ -80,8 +81,8 @@ function mimeFromFileType(fileType?: string): string {
 }
 
 export default function OcrPreviewPage() {
-  // OCR 管理接口属于 eap-app（8081），而本页面当前不应使用 python 的 8099 配置。
-  const eapBaseUrl = 'http://localhost:8081'
+  // 统一经网关访问，避免前端直连后端服务。
+  const eapBaseUrl = 'http://localhost:8079'
 
   const [loadingMain, setLoadingMain] = useState(false)
   const [loadingSplits, setLoadingSplits] = useState(false)
@@ -97,6 +98,7 @@ export default function OcrPreviewPage() {
 
   const [includeImageBase64, setIncludeImageBase64] = useState(false)
   const [imageModalSplit, setImageModalSplit] = useState<OcrFileSplitPreview | null>(null)
+  const [imageRotateDeg, setImageRotateDeg] = useState(0)
   const imageModalOpen = imageModalSplit != null
   // refresh 后自动兜底：如果默认选中的 mainId 分片为空，则尝试切换到下一条。
   const autoPickSplitsEnabledRef = useRef(false)
@@ -188,6 +190,26 @@ export default function OcrPreviewPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMainId, includeImageBase64])
+
+  useEffect(() => {
+    setImageRotateDeg(0)
+  }, [imageModalSplit?.id])
+
+  const modalSplitIndex = imageModalSplit
+    ? splits.findIndex((s) => s.id === imageModalSplit.id)
+    : -1
+  const hasPrevSplit = modalSplitIndex > 0
+  const hasNextSplit = modalSplitIndex >= 0 && modalSplitIndex < splits.length - 1
+  const openPrevSplit = () => {
+    if (!hasPrevSplit) return
+    const prev = splits[modalSplitIndex - 1]
+    if (prev) setImageModalSplit(prev)
+  }
+  const openNextSplit = () => {
+    if (!hasNextSplit) return
+    const next = splits[modalSplitIndex + 1]
+    if (next) setImageModalSplit(next)
+  }
 
   const mainColumns = useMemo<TableProps<OcrFileMainPreview>['columns']>(() => ([
     {
@@ -378,21 +400,67 @@ export default function OcrPreviewPage() {
           : '分片详情'}
         footer={null}
         onCancel={() => setImageModalSplit(null)}
-        destroyOnClose
+        destroyOnHidden
         width="100vw"
         style={{ top: 0, padding: 0 }}
-        bodyStyle={{ height: 'calc(100vh - 55px)', padding: 16, overflow: 'auto' }}
+        styles={{ body: { height: 'calc(100vh - 55px)', padding: 16, overflow: 'auto' } }}
         maskClosable
       >
         {imageModalSplit ? (
           <div style={{ display: 'flex', gap: 16, height: '100%' }}>
-            <div style={{ flex: '0 0 50%', minWidth: 0 }}>
+            <div style={{ flex: '0 0 50%', minWidth: 0, overflow: 'hidden' }}>
+              <Space style={{ marginBottom: 8 }}>
+                <Button
+                  size="small"
+                  icon={<LeftOutlined />}
+                  onClick={openPrevSplit}
+                  disabled={!hasPrevSplit}
+                >
+                  上一页
+                </Button>
+                <Button
+                  size="small"
+                  icon={<RightOutlined />}
+                  onClick={openNextSplit}
+                  disabled={!hasNextSplit}
+                >
+                  下一页
+                </Button>
+                <Button
+                  size="small"
+                  icon={<RotateLeftOutlined />}
+                  onClick={() => setImageRotateDeg((d) => d - 90)}
+                >
+                  左旋
+                </Button>
+                <Button
+                  size="small"
+                  icon={<RotateRightOutlined />}
+                  onClick={() => setImageRotateDeg((d) => d + 90)}
+                >
+                  右旋
+                </Button>
+                <Button size="small" onClick={() => setImageRotateDeg(0)}>重置</Button>
+                <Text type="secondary">角度：{((imageRotateDeg % 360) + 360) % 360}°</Text>
+                <Text type="secondary">
+                  {modalSplitIndex >= 0 ? `${modalSplitIndex + 1}/${splits.length}` : '—'}
+                </Text>
+              </Space>
               {imageModalSplit.imageBase64 ? (
-                <img
-                  alt="split-fullscreen"
-                  src={`data:${mimeFromFileType(imageModalSplit.fileType)};base64,${imageModalSplit.imageBase64}`}
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', border: '1px solid #eee' }}
-                />
+                <div style={{ height: 'calc(100% - 36px)', border: '1px solid #eee', overflow: 'hidden' }}>
+                  <img
+                    alt="split-fullscreen"
+                    src={`data:${mimeFromFileType(imageModalSplit.fileType)};base64,${imageModalSplit.imageBase64}`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      transform: `rotate(${imageRotateDeg}deg)`,
+                      transformOrigin: 'center center',
+                      transition: 'transform 0.2s ease',
+                    }}
+                  />
+                </div>
               ) : (
                 <Text type="secondary">未开启图片展示（base64 为空）</Text>
               )}

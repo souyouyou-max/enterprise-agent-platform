@@ -9,6 +9,7 @@ import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   MessageOutlined,
+  ScanOutlined,
 } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useConfig } from '@/store/config'
@@ -41,14 +42,17 @@ const menuItems = [
     children: [
       { key: 'compare-two-files', label: '两文件对比', path: '/compare-two-files' },
       { key: 'compare-files', label: '多文件对比', path: '/compare-files' },
-      { key: 'compare-base64', label: 'Base64 对比', path: '/compare-base64' },
+      { key: 'compare-base64', label: '多附件相似度对比', path: '/compare-base64' },
     ],
   },
   {
-    key: 'ocr-preview',
-    icon: <FileTextOutlined />,
-    label: 'OCR 识别预览',
-    path: '/ocr-preview',
+    key: 'ocr',
+    icon: <ScanOutlined />,
+    label: 'OCR 流水线',
+    children: [
+      { key: 'ocr-pipeline', label: '批量 OCR 流水线', path: '/ocr-pipeline' },
+      { key: 'ocr-preview',  label: 'OCR 识别预览',    path: '/ocr-preview' },
+    ],
   },
   {
     key: 'diff-viewer',
@@ -70,10 +74,11 @@ const PAGE_TITLES: Record<string, string> = {
   '/compare-texts': '多文本对比',
   '/compare-two-files': '两文件对比',
   '/compare-files': '多文件对比',
-  '/compare-base64': 'Base64 文件对比',
+  '/compare-base64': '多附件相似度对比（文字 + 文件整体）',
   '/diff-viewer': '文件相似度 Diff 视图',
   '/chat': 'AI 对话',
   '/ocr-preview': 'OCR 识别预览',
+  '/ocr-pipeline': 'OCR 批量流水线（文件上传 → OCR → 语义分析 → 相似度对比）',
 }
 
 type HealthStatus = 'unknown' | 'ok' | 'err'
@@ -81,8 +86,8 @@ type HealthStatus = 'unknown' | 'ok' | 'err'
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const { baseUrl, setBaseUrl } = useConfig()
-  const [urlInput, setUrlInput] = useState(baseUrl)
+  const { baseUrl, setBaseUrl, javaBaseUrl, setJavaBaseUrl } = useConfig()
+  const [gatewayUrlInput, setGatewayUrlInput] = useState(javaBaseUrl || baseUrl)
   const [healthStatus, setHealthStatus] = useState<HealthStatus>('unknown')
   const [collapsed, setCollapsed] = useState(false)
 
@@ -90,8 +95,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const pageTitle = PAGE_TITLES[location.pathname] ?? 'Bid Analysis'
 
   const checkHealth = async () => {
-    const url = urlInput.replace(/\/$/, '')
+    const url = gatewayUrlInput.replace(/\/$/, '')
     setBaseUrl(url)
+    setJavaBaseUrl(url)
     try {
       await apiFetch(url, '/health')
       setHealthStatus('ok')
@@ -153,7 +159,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           theme="dark"
           mode="inline"
           selectedKeys={[activeKey]}
-          defaultOpenKeys={['texts', 'files']}
+          defaultOpenKeys={['texts', 'files', 'ocr']}
           items={buildMenuItems()}
           className={styles.menu}
           style={{ marginTop: collapsed ? 16 : 0 }}
@@ -165,15 +171,23 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <Text strong className={styles.headerTitle}>{pageTitle}</Text>
           <Space>
             {statusDot}
-            <Input
-              value={urlInput}
-              onChange={e => setUrlInput(e.target.value)}
-              onPressEnter={checkHealth}
-              placeholder="http://localhost:8099"
-              style={{ width: 220 }}
-              size="small"
-            />
-            <Button size="small" onClick={checkHealth}>检测连通性</Button>
+            <Tooltip title="网关统一入口地址（前端全部请求均通过网关转发）">
+              <Input
+                value={gatewayUrlInput}
+                onChange={e => setGatewayUrlInput(e.target.value)}
+                onPressEnter={checkHealth}
+                onBlur={() => {
+                  const url = gatewayUrlInput.replace(/\/$/, '')
+                  setBaseUrl(url)
+                  setJavaBaseUrl(url)
+                }}
+                placeholder="http://localhost:8079（网关）"
+                prefix={<Text type="secondary" style={{ fontSize: 11 }}>Gateway</Text>}
+                style={{ width: 320 }}
+                size="small"
+              />
+            </Tooltip>
+            <Button size="small" onClick={checkHealth}>检测</Button>
             <Tag color="blue" style={{ margin: 0 }}>v0.1</Tag>
           </Space>
         </Header>

@@ -36,7 +36,7 @@ public class ZhengyanPlatformTool implements EnterpriseTool {
     @Value("${eap.tools.zhengyan.platform.authorization}")
     private String authorization;
 
-    @Value("${eap.tools.zhengyan.platform.app-id:}")
+    @Value("${eap.tools.zhengyan.platform.app-id}")
     private String appId;
 
     @Value("${eap.tools.zhengyan.platform.endpoints.img2text}")
@@ -80,7 +80,11 @@ public class ZhengyanPlatformTool implements EnterpriseTool {
 
     public String img2Text(String params) {
         if (!preCheck()) {
-            return checkError();
+            String errJson = checkError();
+            // preCheck 失败时必须打印 warn，否则调用方完全看不到任何日志，
+            // 表现为"分片立即失败但无 API 调用记录"。
+            log.warn("[ZhengyanPlatformTool] img2text 跳过调用（配置不满足）: {}", abbreviate(errJson, 300));
+            return errJson;
         }
         try {
             ObjectNode body = buildImg2TextBody(params);
