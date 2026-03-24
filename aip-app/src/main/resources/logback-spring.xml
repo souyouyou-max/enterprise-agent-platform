@@ -10,8 +10,12 @@
     <!-- ===================================================================
          属性定义
     =================================================================== -->
-    <springProperty scope="context" name="APP_NAME"
-                    source="spring.application.name" defaultValue="aip-app"/>
+    <!--
+         日志文件名不要用 <springProperty source="spring.application.name"/> 单独驱动：
+         Logback 初始化往往早于 Environment 就绪，未解析时会出现 APP_NAME_IS_UNDEFINED.log。
+         这里用 Logback 自带默认值；需要区分实例时在进程环境变量里设置 APP_NAME=xxx。
+    -->
+    <property name="APP_NAME" value="${APP_NAME:-aip-app}"/>
     <property name="LOG_HOME"    value="${LOG_HOME:-logs}"/>
     <property name="MAX_HISTORY" value="${LOG_MAX_HISTORY:-30}"/>
     <property name="MAX_SIZE"    value="${LOG_MAX_SIZE:-100MB}"/>
