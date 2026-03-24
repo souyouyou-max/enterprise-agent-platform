@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.sinosig.aip</groupId>
+        <artifactId>aip-data</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>aip-data-ingestion</artifactId>
+    <name>AIP Data Ingestion</name>
+    <description>数据层-接入：外部数据源适配器（招采/费控/EHR/企查查）</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.sinosig.aip</groupId>
+            <artifactId>aip-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.sinosig.aip</groupId>
+            <artifactId>aip-data-repository</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+        </dependency>
+        <!-- Spring Web（RestTemplate） -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <!-- Spring Boot Web（RestTemplateBuilder） -->
+
+    </dependencies>
+</project>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.sinosig.aip</groupId>
+        <artifactId>aip-platform</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>aip-engine</artifactId>
+    <packaging>pom</packaging>
+    <name>AIP Engine</name>
+    <description>引擎层：LLM 后端 + Agent 核心 + RAG知识检索 + 规则引擎</description>
+
+    <modules>
+        <module>aip-engine-llm</module>
+        <module>aip-engine-agent-core</module>
+        <module>aip-engine-rag</module>
+        <module>aip-engine-rule</module>
+        <module>aip-engine-tools</module>
+    </modules>
+</project>

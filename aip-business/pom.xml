@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.sinosig.aip</groupId>
+        <artifactId>aip-platform</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>aip-business</artifactId>
+    <packaging>pom</packaging>
+    <name>AIP Business</name>
+    <description>业务层：任务管理 / 疑点筛查 / 报告生成 / AI 交互中心</description>
+
+    <modules>
+        <module>aip-business-screening</module>
+        <module>aip-business-report</module>
+        <module>aip-business-auditing</module>
+        <module>aip-business-pipeline</module>
+        <module>aip-business-chat</module>
+    </modules>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>enforce-business-llm-boundary</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>false</searchTransitive>
+                                    <excludes>
+                                        <exclude>org.springframework.ai:spring-ai-starter-model-openai</exclude>
+                                    </excludes>
+                                    <message>
+                                        业务层禁止直接依赖 spring-ai-starter-model-openai，请改为依赖 aip-engine-llm 提供的抽象能力。
+                                    </message>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

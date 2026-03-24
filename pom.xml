@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.enterprise.agent</groupId>
-    <artifactId>enterprise-agent-platform</artifactId>
+    <groupId>com.sinosig.aip</groupId>
+    <artifactId>aip-platform</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Enterprise Agent Platform</name>
@@ -13,19 +13,19 @@
 
     <modules>
         <!-- 公共基础层 -->
-        <module>eap-common</module>
+        <module>aip-common</module>
         <!-- 数据层 -->
-        <module>eap-data</module>
+        <module>aip-data</module>
         <!-- 引擎层 -->
-        <module>eap-engine</module>
+        <module>aip-engine</module>
         <!-- 业务层 -->
-        <module>eap-business</module>
+        <module>aip-business</module>
         <!-- 网关层 -->
-        <module>eap-gateway</module>
+        <module>aip-gateway</module>
         <!-- 调度服务 -->
-        <module>eap-scheduler</module>
+        <module>aip-scheduler</module>
         <!-- 主应用 -->
-        <module>eap-app</module>
+        <module>aip-app</module>
     </modules>
 
     <properties>
@@ -94,76 +94,71 @@
 
             <!-- 内部模块 - 公共层 -->
             <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-common</artifactId>
+                <groupId>com.sinosig.aip</groupId>
+                <artifactId>aip-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- 内部模块 - 数据层 -->
             <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-data-repository</artifactId>
+                <groupId>com.sinosig.aip</groupId>
+                <artifactId>aip-data-repository</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-data-ingestion</artifactId>
+                <groupId>com.sinosig.aip</groupId>
+                <artifactId>aip-data-ingestion</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- 内部模块 - 引擎层 -->
             <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-engine-llm</artifactId>
+                <groupId>com.sinosig.aip</groupId>
+                <artifactId>aip-engine-llm</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-engine-tools</artifactId>
+                <groupId>com.sinosig.aip</groupId>
+                <artifactId>aip-engine-tools</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-engine-rag</artifactId>
+                <groupId>com.sinosig.aip</groupId>
+                <artifactId>aip-engine-rag</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-engine-rule</artifactId>
+                <groupId>com.sinosig.aip</groupId>
+                <artifactId>aip-engine-rule</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-engine-agent-core</artifactId>
+                <groupId>com.sinosig.aip</groupId>
+                <artifactId>aip-engine-agent-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- 内部模块 - 业务层 -->
             <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-business-task</artifactId>
+                <groupId>com.sinosig.aip</groupId>
+                <artifactId>aip-business-screening</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-business-screening</artifactId>
+                <groupId>com.sinosig.aip</groupId>
+                <artifactId>aip-business-report</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-business-report</artifactId>
+                <groupId>com.sinosig.aip</groupId>
+                <artifactId>aip-business-auditing</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-business-auditing</artifactId>
+                <groupId>com.sinosig.aip</groupId>
+                <artifactId>aip-business-pipeline</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-business-pipeline</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.enterprise.agent</groupId>
-                <artifactId>eap-business-chat</artifactId>
+                <groupId>com.sinosig.aip</groupId>
+                <artifactId>aip-business-chat</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -175,7 +170,7 @@
                 <version>${spring-cloud-alibaba.version}</version>
             </dependency>
 
-            <!-- Bootstrap Context：保留 4.1.4 以兼容 gateway/scheduler 模块；eap-app 改用 spring.config.import 加载 Nacos -->
+            <!-- Bootstrap Context：保留 4.1.4 以兼容 gateway/scheduler 模块；aip-app 改用 spring.config.import 加载 Nacos -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-starter-bootstrap</artifactId>

@@ -7,7 +7,7 @@
 @baseUrl = http://localhost:8079
 @contentType = application/json
 @batchNo = BATCH_20260323154550_3D693F7D
-@dataId = eap-app.yml
+@dataId = aip-app.yml
 @group = DEFAULT_GROUP
 @namespace =
 @submitter = ops_user
@@ -40,8 +40,8 @@ Content-Type: {{contentType}}
   "dataId": "{{dataId}}",
   "extraInfo": "{\"analysisEnabled\":true}",
   "proposedChanges": {
-    "eap.pipeline.analysis.max-images-per-file": 1,
-    "eap.pipeline.scheduler.interval-ms": 60000
+    "aip.pipeline.analysis.max-images-per-file": 1,
+    "aip.pipeline.scheduler.interval-ms": 60000
   }
 }
 
@@ -55,7 +55,7 @@ Content-Type: {{contentType}}
   "dataId": "{{dataId}}",
   "extraInfo": "{\"analysisEnabled\":true}",
   "proposedChanges": {
-    "eap.pipeline.analysis.not-allowed-key": 123
+    "aip.pipeline.analysis.not-allowed-key": 123
   }
 }
 
@@ -70,7 +70,7 @@ Content-Type: {{contentType}}
   "dataId": "{{dataId}}",
   "extraInfo": "{\"analysisEnabled\":true}",
   "proposedChanges": {
-    "eap.pipeline.analysis.max-images-per-file": 1
+    "aip.pipeline.analysis.max-images-per-file": 1
   },
   "submitter": "{{submitter}}",
   "ticketNo": "{{ticketNo}}"
@@ -96,7 +96,7 @@ Content-Type: {{contentType}}
   "dataId": "{{dataId}}",
   "extraInfo": "{\"analysisEnabled\":true}",
   "proposedChanges": {
-    "eap.pipeline.analysis.max-images-per-file": 999
+    "aip.pipeline.analysis.max-images-per-file": 999
   },
   "submitter": "{{submitter}}",
   "ticketNo": "OPS-TEST-002"

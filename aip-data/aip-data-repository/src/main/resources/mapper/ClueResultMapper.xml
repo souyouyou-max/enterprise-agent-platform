@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sinosig.aip.data.mapper.ClueResultMapper">
+
+    <!--
+        批量插入疑点线索。
+        使用 MyBatis 动态 SQL 拼接多行 VALUES，单次 SQL 完成批量写入，
+        避免 AuditEngineService 中循环逐条 insert 带来的 N 次 DB 往返。
+    -->
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO clue_result (
+            apply_code, rule_name, risk_level, description,
+            evidence, status, created_at, updated_at
+        ) VALUES
+        <foreach collection="list" item="c" separator=",">
+            (
+                #{c.applyCode}, #{c.ruleName}, #{c.riskLevel}, #{c.description},
+                #{c.evidence}, #{c.status}, NOW(), NOW()
+            )
+        </foreach>
+    </insert>
+
+</mapper>

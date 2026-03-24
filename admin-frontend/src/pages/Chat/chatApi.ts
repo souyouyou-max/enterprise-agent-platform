@@ -84,7 +84,7 @@ export async function streamChat(
 }
 
 export async function img2TextChat(baseUrl: string, payload: Img2TextPayload): Promise<string> {
-  const res = await apiFetch<any>(baseUrl, '/api/v1/enterprise/semantics/img2text', {
+  const res = await apiFetch<any>(baseUrl, '/api/v1/aip/semantics/img2text', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -124,7 +124,7 @@ export async function img2TextChat(baseUrl: string, payload: Img2TextPayload): P
 }
 
 export async function autoOcrChat(baseUrl: string, payload: Img2TextPayload): Promise<string> {
-  const res = await apiFetch<any>(baseUrl, '/api/v1/enterprise/semantics/auto-ocr', {
+  const res = await apiFetch<any>(baseUrl, '/api/v1/aip/semantics/auto-ocr', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

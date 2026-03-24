@@ -1,5 +1,5 @@
 -- ============================================================
--- EAP Enterprise Agent Platform  -  OceanBase DDL
+-- AIP Enterprise Agent Platform  -  OceanBase DDL
 -- 数据库模式：Oracle 兼容模式（com.oceanbase.jdbc.Driver）
 -- 执行前请确认已切换到目标 Schema / Database
 --

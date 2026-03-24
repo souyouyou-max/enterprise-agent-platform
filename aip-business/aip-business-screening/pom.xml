@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.sinosig.aip</groupId>
+        <artifactId>aip-business</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>aip-business-screening</artifactId>
+    <name>AIP Business Screening</name>
+    <description>业务层-疑点筛查：AuditEngineService</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.sinosig.aip</groupId>
+            <artifactId>aip-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.sinosig.aip</groupId>
+            <artifactId>aip-data-repository</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.sinosig.aip</groupId>
+            <artifactId>aip-data-ingestion</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.sinosig.aip</groupId>
+            <artifactId>aip-engine-rule</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+    </dependencies>
+</project>

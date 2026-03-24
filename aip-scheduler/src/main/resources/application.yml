@@ -1,0 +1,33 @@
+server:
+  port: 8085
+
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        enabled: ${NACOS_ENABLED:true}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+        fail-fast: true
+
+# 调度任务专属配置
+aip:
+  audit:
+    apply-codes: ${AUDIT_APPLY_CODES:10001}
+    interval-seconds: ${AUDIT_INTERVAL_SECONDS:3600}
+    initial-delay-seconds: ${AUDIT_INITIAL_DELAY_SECONDS:30}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    com.sinosig.aip: INFO
+    com.alibaba.nacos: INFO
+    com.alibaba.cloud.nacos: INFO
+  pattern:
+    console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

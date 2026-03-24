@@ -1,40 +1,30 @@
-version: '3.8'
+version: "3.8"
 
-# Enterprise Agent Platform - Docker Compose
-# 包含 5 个微服务 + 4 个基础设施组件
-#
-# 启动顺序：基础设施 → eap-gateway → 各业务服务
-# 命令：docker-compose up -d
+# AIP 基础设施编排（仅基础组件）
+# Java 服务（aip-app/aip-gateway/aip-scheduler）通过 Maven 本地启动。
 
 services:
-
-  # ============================================================
-  # 基础设施层
-  # ============================================================
-
   postgresql:
     image: postgres:16-alpine
-    container_name: eap-postgresql
+    container_name: aip-postgresql
     environment:
-      POSTGRES_DB: eap_db
-      POSTGRES_USER: eap_user
-      POSTGRES_PASSWORD: eap_password
+      POSTGRES_DB: aip_db
+      POSTGRES_USER: aip_user
+      POSTGRES_PASSWORD: aip_password
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./eap-service-agent/src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U eap_user -d eap_db"]
+      test: ["CMD-SHELL", "pg_isready -U aip_user -d aip_db"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - eap-network
 
   redis:
     image: redis:7-alpine
-    container_name: eap-redis
+    container_name: aip-redis
     ports:
       - "6379:6379"
     volumes:
@@ -44,44 +34,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - eap-network
-
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    container_name: eap-zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      - eap-network
-
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    container_name: eap-kafka
-    depends_on:
-      - zookeeper
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-    healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-    networks:
-      - eap-network
 
   nacos:
     image: nacos/nacos-server:v2.3.0
-    container_name: eap-nacos
+    container_name: aip-nacos
     environment:
       MODE: standalone
       PREFER_HOST_MODE: hostname
@@ -94,143 +50,6 @@ services:
       interval: 15s
       timeout: 10s
       retries: 5
-    networks:
-      - eap-network
-
-  # ============================================================
-  # 微服务层
-  # ============================================================
-
-  eap-gateway:
-    build:
-      context: .
-      dockerfile: eap-gateway/Dockerfile
-    container_name: eap-gateway
-    ports:
-      - "8080:8080"
-    environment:
-      NACOS_ADDR: nacos:8848
-      NACOS_ENABLED: "true"
-    depends_on:
-      nacos:
-        condition: service_healthy
-    networks:
-      - eap-network
-
-  eap-service-agent:
-    build:
-      context: .
-      dockerfile: eap-service-agent/Dockerfile
-    container_name: eap-service-agent
-    ports:
-      - "8081:8081"
-    environment:
-      DB_HOST: postgresql
-      DB_USERNAME: eap_user
-      DB_PASSWORD: eap_password
-      REDIS_HOST: redis
-      KAFKA_SERVERS: kafka:29092
-      NACOS_ADDR: nacos:8848
-      NACOS_ENABLED: "true"
-      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-placeholder}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-sk-ant-placeholder}
-    depends_on:
-      postgresql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      nacos:
-        condition: service_healthy
-    networks:
-      - eap-network
-
-  eap-service-knowledge:
-    build:
-      context: .
-      dockerfile: eap-service-knowledge/Dockerfile
-    container_name: eap-service-knowledge
-    ports:
-      - "8082:8082"
-    environment:
-      DB_HOST: postgresql
-      DB_USERNAME: eap_user
-      DB_PASSWORD: eap_password
-      REDIS_HOST: redis
-      NACOS_ADDR: nacos:8848
-      NACOS_ENABLED: "true"
-      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-placeholder}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-sk-ant-placeholder}
-    depends_on:
-      postgresql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      nacos:
-        condition: service_healthy
-    networks:
-      - eap-network
-
-  eap-service-insight:
-    build:
-      context: .
-      dockerfile: eap-service-insight/Dockerfile
-    container_name: eap-service-insight
-    ports:
-      - "8083:8083"
-    environment:
-      DB_HOST: postgresql
-      DB_USERNAME: eap_user
-      DB_PASSWORD: eap_password
-      REDIS_HOST: redis
-      NACOS_ADDR: nacos:8848
-      NACOS_ENABLED: "true"
-      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-placeholder}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-sk-ant-placeholder}
-    depends_on:
-      postgresql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      nacos:
-        condition: service_healthy
-    networks:
-      - eap-network
-
-  eap-service-chat:
-    build:
-      context: .
-      dockerfile: eap-service-chat/Dockerfile
-    container_name: eap-service-chat
-    ports:
-      - "8084:8084"
-    environment:
-      DB_HOST: postgresql
-      DB_USERNAME: eap_user
-      DB_PASSWORD: eap_password
-      REDIS_HOST: redis
-      NACOS_ADDR: nacos:8848
-      NACOS_ENABLED: "true"
-      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-placeholder}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-sk-ant-placeholder}
-    depends_on:
-      postgresql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      nacos:
-        condition: service_healthy
-    networks:
-      - eap-network
-
-networks:
-  eap-network:
-    driver: bridge
 
 volumes:
   postgres_data:
